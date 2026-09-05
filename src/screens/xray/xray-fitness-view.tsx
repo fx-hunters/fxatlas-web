@@ -266,7 +266,7 @@ export function XRayFitnessView({
                     backgroundColor: "var(--normal)",
                     borderRadius: "var(--radius-full)",
                     boxShadow: "0 0 6px var(--normal)",
-                    transition: "width 0.2s ease",
+                    transition: "width 0.5s var(--ease-out-smooth)",
                   }}
                 />
               </div>

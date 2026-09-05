@@ -57,6 +57,8 @@ export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
             gap: '0.5rem',
             fontSize: '0.875rem',
             fontWeight: 600,
+            animation: 'barSlideInDown 0.35s var(--ease-out-smooth) forwards',
+            transition: 'all var(--transition-normal)',
           }}
         >
           <Icon name="checkCircle" size={18} className="text-primary" />

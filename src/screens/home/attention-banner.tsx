@@ -30,6 +30,8 @@ export function AttentionBanner({ alert, onNavigateToPlanner }: AttentionBannerP
           borderRadius: "var(--radius-md)",
           fontSize: "0.875rem",
           color: "var(--text)",
+          animation: "barSlideInDown 0.35s var(--ease-out-smooth) forwards",
+          transition: "all var(--transition-normal)",
         }}
       >
         <div style={{ fontWeight: 700, color: "var(--warn)", marginBottom: "0.25rem" }}>

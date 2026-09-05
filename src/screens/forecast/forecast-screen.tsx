@@ -346,6 +346,8 @@ export function ForecastScreen({ isDemo = true, onNavigate }: ForecastScreenProp
                         backgroundColor: barColor,
                         borderRadius: "var(--radius-full)",
                         boxShadow: `0 0 4px ${barColor}`,
+                        transition: "width 0.5s var(--ease-out-smooth), background-color 0.3s ease",
+                        transformOrigin: "left",
                       }}
                     />
                   </div>
