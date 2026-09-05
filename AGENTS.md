@@ -66,7 +66,7 @@ src/
 
 | 항목 | 규칙 |
 |---|---|
-| 버전 동기화 | 백엔드가 `/api/v1/...` URL 버저닝을 쓰므로, FE는 baseURL을 환경변수/설정 파일 한 곳에만 둔다. 하드코딩 금지 |
+| 버전 동기화 | 백엔드가 `/api/v1/...` URL 버저닝을 쓰므로, FE는 baseURL을 환경변수/설정 파일 한 곳에만 둔다. 하드코딩 금지. 백엔드 주소는 빌드타임 환경변수 `VITE_API_URL`(`.env` / `.env.example`)로만 참조하고, `api/client.ts`의 `resolveApiBaseUrl()`을 거친다 |
 | 타입 동기화 | 백엔드 Swagger UI(`/swagger-ui/index.html`)와 OpenAPI 스펙(`/v3/api-docs`)을 참고해 요청/응답 타입을 맞춘다 |
 | 버전 변경 대응 | 백엔드가 `/api/v2`를 열면(이슈/PR에서 공지됨) 같은 스프린트 내 대응 PR을 올린다 |
 | 응답 해석 | 모든 응답은 `data`+`meta`로 감싸서 온다. 공통 fetch 래퍼에서 언래핑한다 |

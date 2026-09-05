@@ -22,8 +22,6 @@ export default defineConfig({
         // 테스트·셋업 파일
         "**/*.test.*",
         "**/src/test/**",
-        // TODO: 아직 구현 전 스텁. 실제 로직이 들어가면 이 제외를 지우고 테스트를 추가한다.
-        "**/api/client.ts",
       ],
     },
   },
