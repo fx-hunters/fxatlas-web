@@ -212,7 +212,7 @@ export function FanChart({ data, currency }: FanChartProps) {
         )}
 
         {/* 마우스 호버 감지용 인터랙티브 수직 영역 */}
-        {data.map((d, i) => {
+        {data.map((_, i) => {
           const x = getX(i);
           const colWidth = innerWidth / data.length;
           return (

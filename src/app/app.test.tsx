@@ -58,4 +58,27 @@ describe("App", () => {
     fireEvent.click(avatarBtn);
     expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
   });
+
+  it("데모 모드 토글 및 테마 토글이 정상 동작한다", () => {
+    render(<App />);
+    const demoToggle = screen.getByRole("button", { name: /데모 데이터 켜짐/ });
+    expect(demoToggle).toBeInTheDocument();
+
+    fireEvent.click(demoToggle);
+    expect(screen.getByRole("button", { name: /빈 상태 보기/ })).toBeInTheDocument();
+
+    const themeToggle = screen.getByRole("button", { name: /라이트 모드로 변경/ });
+    fireEvent.click(themeToggle);
+    expect(screen.getByRole("button", { name: /다크 모드로 변경/ })).toBeInTheDocument();
+  });
+
+  it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", () => {
+    render(<App />);
+    const mobileNav = screen.getByRole("navigation", { name: "모바일 하단 내비게이션" });
+    const mobilePlannerBtn = mobileNav.querySelector("button:nth-child(2)");
+    if (mobilePlannerBtn) {
+      fireEvent.click(mobilePlannerBtn);
+      expect(screen.getByRole("heading", { name: "환전 플래너", level: 2 })).toBeInTheDocument();
+    }
+  });
 });

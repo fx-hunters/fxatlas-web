@@ -14,7 +14,6 @@ export function RouteScreen({ isDemo = true }: RouteScreenProps) {
     goals,
     viewMode,
     selectedGoal,
-    selectedGoalId,
     monthlyKrw,
     safeRatioPct,
     splitRounds,
