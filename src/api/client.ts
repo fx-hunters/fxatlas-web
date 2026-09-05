@@ -35,3 +35,84 @@ export function apiUrl(path: string, env?: ApiEnv): string {
   const base = resolveApiBaseUrl(env);
   return `${base}/${path.replace(/^\/+/, "")}`;
 }
+
+/**
+ * 모든 응답을 감싸는 공통 메타 정보. 백엔드가 응답마다 자동 생성한다.
+ * 필드는 snake_case로 도착하므로 언래핑 시 camelCase로 변환된다.
+ */
+export interface ApiMeta {
+  timestamp: string;
+}
+
+/** 백엔드 표준 응답 봉투. 실제 데이터는 data, 부가정보는 meta에 담긴다. */
+interface ApiEnvelope<T> {
+  data: T;
+  meta: ApiMeta;
+}
+
+/**
+ * API 호출 실패를 나타내는 타입이 있는 에러.
+ * 화면은 이 타입으로 좁혀 사용자에게 복구 가능한 메시지를 보여준다 (AGENTS.md 7.8).
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+/** snake_case 키 하나를 camelCase로 바꾼다. (`created_at` → `createdAt`) */
+function snakeToCamelKey(key: string): string {
+  return key.replace(/_([a-z0-9])/g, (_match, char: string) =>
+    char.toUpperCase(),
+  );
+}
+
+/**
+ * 백엔드에서 온 값의 모든 객체 키를 재귀적으로 camelCase로 변환한다.
+ * 경계 변환은 이 파일 한 곳에서만 일어난다 (AGENTS.md 4장).
+ * 배열은 원소별로, 객체는 키별로 변환하고, 원시값·null은 그대로 둔다.
+ */
+export function toCamelCase(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(toCamelCase);
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [
+        snakeToCamelKey(key),
+        toCamelCase(val),
+      ]),
+    );
+  }
+  return value;
+}
+
+/**
+ * 공통 fetch 래퍼. 요청을 보내고 { data, meta } 봉투를 언래핑한 뒤,
+ * snake_case → camelCase 변환을 거쳐 data만 반환한다.
+ * 실패 응답(2xx 외)은 ApiError로 던진다.
+ */
+export async function request<T>(
+  path: string,
+  init?: RequestInit,
+  env?: ApiEnv,
+): Promise<T> {
+  const response = await fetch(apiUrl(path, env), {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(
+      `요청이 실패했습니다 (HTTP ${response.status}).`,
+      response.status,
+    );
+  }
+
+  const envelope = (await response.json()) as ApiEnvelope<unknown>;
+  return toCamelCase(envelope.data) as T;
+}
