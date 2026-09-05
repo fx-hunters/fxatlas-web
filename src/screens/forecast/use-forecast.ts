@@ -129,7 +129,7 @@ export function useForecast(isDemo: boolean = true) {
   }, [currency, period]);
 
   const currencyInfo = useMemo(() => {
-    return FORECAST_METRICS[currency] ?? FORECAST_METRICS.USD;
+    return FORECAST_METRICS[currency];
   }, [currency]);
 
   const handleSetCurrency = useCallback((c: ForecastCurrency) => {

@@ -32,4 +32,14 @@ describe("FxHoldingCard", () => {
     fireEvent.click(editBtn);
     expect(onNavigateToAssets).toHaveBeenCalled();
   });
+
+  it("음수 변동치와 액션 버튼 없는 상태를 올바르게 렌더링한다", () => {
+    const negativeData: FxHoldingData = {
+      ...sampleData,
+      dayOverDayDiffPctPoints: -0.5,
+    };
+    render(<FxHoldingCard data={negativeData} />);
+    expect(screen.getByText("-0.5%p")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "자산 등록 / 편집" })).not.toBeInTheDocument();
+  });
 });

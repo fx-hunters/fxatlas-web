@@ -1,3 +1,5 @@
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
 interface DonutChartProps {
   /** 0 ~ 100 사이의 퍼센트 값 */
   readonly percent: number;
@@ -18,18 +20,24 @@ export function DonutChart({
   label,
   className = "",
 }: DonutChartProps) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
   const clampedPercent = Math.min(Math.max(percent, 0), 100);
-  const strokeDashoffset = circumference - (clampedPercent / 100) * circumference;
+  const outerRadius = size / 2;
+  const innerRadius = Math.max(0, outerRadius - strokeWidth);
+
+  const data = [
+    { name: "value", value: Number(clampedPercent.toFixed(1)) },
+    { name: "track", value: Number((100 - clampedPercent).toFixed(1)) },
+  ];
 
   return (
     <div
-      className={`donut-chart ${className}`}
+      className={`donut-chart relative flex items-center justify-center shrink-0 ${className}`}
       style={{
         position: "relative",
         width: size,
         height: size,
+        minWidth: size,
+        minHeight: size,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -37,37 +45,27 @@ export function DonutChart({
       aria-label={label ?? `외화 비중 ${Math.round(clampedPercent)}%`}
       role="img"
     >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        style={{ transform: "rotate(-90deg)" }}
-      >
-        {/* 배경 트랙 */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={trackColor}
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        {/* 채워진 세그먼트 */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          fill="none"
-          style={{ transition: "stroke-dashoffset 0.5s ease" }}
-        />
-      </svg>
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
+            dataKey="value"
+            stroke="none"
+            startAngle={90}
+            endAngle={-270}
+          >
+            <Cell fill={color} />
+            <Cell fill={trackColor} />
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
       {/* 중앙 텍스트 */}
       <div
+        className="absolute flex items-baseline justify-center pointer-events-none"
         style={{
           position: "absolute",
           display: "flex",

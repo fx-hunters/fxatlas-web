@@ -98,30 +98,13 @@ export function Sidebar({
                 fontSize: "0.875rem",
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? "var(--primary)" : "var(--text-muted)",
-                backgroundColor: isActive ? "var(--bg)" : "transparent",
-                border: `1px solid ${isActive ? "var(--border-subtle)" : "transparent"}`,
+                backgroundColor: isActive ? "var(--primary-subtle)" : "transparent",
+                borderLeft: `3px solid ${isActive ? "var(--primary)" : "transparent"}`,
                 boxShadow: isActive ? "var(--shadow-sm)" : "none",
-                transition: "all var(--transition-normal)",
+                transition: "all 150ms ease",
                 textAlign: "left",
-                overflow: "hidden",
               }}
             >
-              {/* 좌측 액티브 인디케이터 바 (자연스러운 in/out 애니메이션) */}
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: "20%",
-                  bottom: "20%",
-                  width: "3px",
-                  backgroundColor: "var(--primary)",
-                  borderRadius: "var(--radius-full)",
-                  transform: isActive ? "scaleY(1)" : "scaleY(0)",
-                  opacity: isActive ? 1 : 0,
-                  transformOrigin: "center",
-                  transition: "transform var(--transition-normal), opacity var(--transition-normal)",
-                }}
-              />
               <Icon
                 name={item.iconName}
                 size={18}

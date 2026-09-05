@@ -48,6 +48,7 @@ export function ProgressBar({
         }}
       >
         <div
+          className="progress-bar-fill-animated"
           style={{
             width: `${clampedRatio}%`,
             height: "100%",

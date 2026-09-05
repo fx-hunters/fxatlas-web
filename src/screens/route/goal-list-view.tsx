@@ -91,6 +91,7 @@ export function GoalListView({
                     onSelectGoal(goal.id);
                   }
                 }}
+                className="goal-card group"
                 style={{
                   backgroundColor: "var(--surface)",
                   border: "1px solid var(--border)",
@@ -101,7 +102,6 @@ export function GoalListView({
                   flexDirection: "column",
                   gap: "1.25rem",
                   boxShadow: "var(--shadow-sm)",
-                  transition: "all 0.2s ease",
                   position: "relative",
                 }}
               >
@@ -114,6 +114,7 @@ export function GoalListView({
                 >
                   <div>
                     <h3
+                      className="goal-card-title"
                       style={{
                         fontSize: "1.125rem",
                         fontWeight: 700,

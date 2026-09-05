@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { NavTabId } from "../types/navigation";
-import { NAV_ITEMS } from "../types/navigation";
 import { useTheme } from "../hooks/use-theme";
 import { Sidebar } from "../components/layout/sidebar";
 import { Header } from "../components/layout/header";
@@ -13,13 +12,21 @@ import { ForecastScreen } from "../screens/forecast/forecast-screen";
 import { MyPageScreen } from "../screens/mypage/mypage-screen";
 import { ConnectivityCheckPanel } from "../screens/connectivity/connectivity-check-panel";
 
+const TAB_LABELS: Record<NavTabId, string> = {
+  home: "홈",
+  planner: "환전 플래너",
+  assets: "내 자산",
+  range: "환율 범위",
+  mypage: "마이페이지",
+  connectivity: "연결 확인",
+};
+
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTabId>("home");
   const [isDemo, setIsDemo] = useState<boolean>(true);
   const { isDark, toggleTheme } = useTheme("dark");
 
-  const currentTabItem = NAV_ITEMS.find((item) => item.id === activeTab);
-  const activeTabTitle = currentTabItem ? currentTabItem.label : "홈";
+  const activeTabTitle = TAB_LABELS[activeTab];
 
   return (
     <div className="app-shell">
@@ -43,7 +50,7 @@ export function App() {
         />
 
         <main className="app-scroll-content">
-          <div className="app-content-container">
+          <div key={activeTab} className="app-content-container page-enter-animation">
             {activeTab === "home" && (
               <HomeScreen isDemo={isDemo} onNavigate={setActiveTab} />
             )}

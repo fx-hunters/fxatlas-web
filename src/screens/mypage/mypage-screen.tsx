@@ -478,6 +478,7 @@ export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
           <button
             type="button"
             onClick={() => handleNavigate('planner')}
+            className="btn-primary-glow"
             style={{
               fontSize: '0.875rem',
               backgroundColor: 'var(--primary)',
@@ -486,12 +487,10 @@ export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
               padding: '0.75rem 1.25rem',
               borderRadius: 'var(--radius-xl)',
               cursor: 'pointer',
-              transition: 'opacity 0.2s',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
               border: 'none',
-              boxShadow: '0 4px 12px rgba(56, 189, 248, 0.2)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = '0.9';
@@ -500,7 +499,7 @@ export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
               e.currentTarget.style.opacity = '1';
             }}
           >
-            외화 목표 편집 <Icon name="arrowRight" size={16} style={{ opacity: 0.7 }} />
+            외화 목표 편집 <Icon name="arrowRight" size={16} className="opacity-70" />
           </button>
         </div>
       </div>

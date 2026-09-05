@@ -623,6 +623,7 @@ export function GoalDetailView({
 
           {/* 접이식 아코디언 (회차 계획 및 이력) */}
           <details
+            className="group"
             style={{
               backgroundColor: "var(--surface)",
               borderRadius: "var(--radius-md)",
@@ -644,7 +645,7 @@ export function GoalDetailView({
               }}
             >
               <span>회차 계획 및 이력 (접힘)</span>
-              <Icon name="chevronDown" size={16} />
+              <Icon name="chevronDown" size={16} className="accordion-chevron" />
             </summary>
 
             <div

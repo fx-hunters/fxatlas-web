@@ -59,3 +59,71 @@
     padding-bottom: calc(var(--mobile-nav-height) + 0.5rem);
   }
 }
+
+.app-shell,
+.app-main-layout,
+.sidebar,
+.mobile-nav,
+.app-header,
+.app-footer {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* 화면 전환 및 바 진입 애니메이션 */
+@keyframes pageEnterFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter-animation {
+  animation: pageEnterFadeSlide 0.2s ease forwards;
+}
+
+/* 4. 카드 호버 elevation & 5. Group-hover 텍스트 전환 */
+.goal-card {
+  transition: all 150ms ease;
+}
+
+.goal-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 166, 112, 0.12), 0 8px 10px -6px rgba(0, 166, 112, 0.06) !important;
+}
+
+.goal-card:hover .goal-card-title {
+  color: var(--primary) !important;
+}
+
+.goal-card-title {
+  transition: color 150ms ease;
+}
+
+/* 6. <details> 아코디언 아이콘 회전 */
+details.group summary .accordion-chevron,
+details[open] summary .accordion-chevron {
+  transition: transform 150ms ease;
+}
+
+details[open] summary .accordion-chevron {
+  transform: rotate(90deg);
+}
+
+/* 11. Primary 버튼 & 카드 정적 glow */
+.btn-primary-glow {
+  box-shadow: 0 4px 14px rgba(0, 166, 112, 0.25);
+  transition: all 150ms ease;
+}
+
+.btn-primary-glow:hover {
+  opacity: 0.9;
+}
+
+:root.dark .btn-primary-glow,
+.dark .btn-primary-glow {
+  box-shadow: 0 4px 14px rgba(0, 255, 170, 0.25);
+}

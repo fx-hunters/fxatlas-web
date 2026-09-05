@@ -12,6 +12,10 @@ describe("HomeScreen", () => {
     const assetsLink = screen.getByRole("button", { name: "자산 등록 / 편집" });
     fireEvent.click(assetsLink);
     expect(onNavigate).toHaveBeenCalledWith("assets");
+
+    const plannerLink = screen.getByRole("button", { name: "플래너 확인하기 →" });
+    fireEvent.click(plannerLink);
+    expect(onNavigate).toHaveBeenCalledWith("planner");
   });
 
   it("빈 상태일 때 HomeEmptyView를 렌더링하고 플래너로 이동할 수 있다", () => {

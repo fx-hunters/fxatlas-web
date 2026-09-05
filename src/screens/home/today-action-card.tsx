@@ -72,6 +72,7 @@ export function TodayActionCard({ data, onRecordComplete }: TodayActionCardProps
         <button
           type="button"
           onClick={onRecordComplete}
+          className="btn-primary-glow"
           style={{
             marginTop: "0.5rem",
             padding: "0.875rem 1.5rem",
@@ -81,8 +82,6 @@ export function TodayActionCard({ data, onRecordComplete }: TodayActionCardProps
             fontWeight: 700,
             fontSize: "0.9375rem",
             textAlign: "center",
-            boxShadow: "0 4px 10px var(--primary-subtle)",
-            transition: "opacity 0.15s ease",
             width: "fit-content",
           }}
         >

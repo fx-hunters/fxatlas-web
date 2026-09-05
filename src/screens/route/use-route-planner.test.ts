@@ -59,6 +59,23 @@ describe("useRoutePlanner", () => {
     const firstGoal = result.current.goals[0];
     const secondGoal = result.current.goals[1];
 
+    // 새로 생성된 목표(선택 시 기본 파라미터 적용) 선택
+    act(() => {
+      result.current.createGoal({
+        purposeType: "recurring",
+        category: "적립",
+        name: "파라미터 없는 목표",
+        currency: "USD",
+        targetAmount: 500,
+        targetDate: "2026-10-10",
+      });
+    });
+    const createdId = result.current.selectedGoalId!;
+    act(() => {
+      result.current.selectGoal(createdId);
+    });
+    expect(result.current.selectedGoal?.name).toBe("파라미터 없는 목표");
+
     act(() => {
       result.current.selectGoal(firstGoal.id);
     });
@@ -84,7 +101,22 @@ describe("useRoutePlanner", () => {
     expect(result.current.selectedGoal?.name).toBe("수정된 여행 목표");
     expect(result.current.selectedGoal?.currency).toBe("JPY");
 
-    // updateGoal 빈 필드 fallback 및 다른 목표 무변화 분기
+    // updateGoal 빈 필드 fallback으로 기존 값 유지
+    act(() => {
+      result.current.updateGoal(firstGoal.id, {
+        purposeType: "recurring",
+        category: "",
+        name: "",
+        currency: "USD",
+        targetAmount: 0,
+        targetDate: "",
+      });
+    });
+    expect(result.current.selectedGoal?.name).toBe("수정된 여행 목표");
+    expect(result.current.selectedGoal?.category).toBe("해외 여행 경비");
+    expect(result.current.selectedGoal?.targetAmount).toBe(200000);
+
+    // updateGoal 다른 목표 무변화 분기
     act(() => {
       result.current.updateGoal("non-existing-id", {
         purposeType: "recurring",
@@ -108,6 +140,13 @@ describe("useRoutePlanner", () => {
     });
     expect(result.current.viewMode).toBe("list");
     expect(result.current.selectedGoalId).toBeNull();
+
+    // 존재하지 않는 목표 ID 선택 시 기본 파라미터 유지
+    act(() => {
+      result.current.selectGoal("non-existing-id");
+    });
+    expect(result.current.viewMode).toBe("detail");
+    expect(result.current.selectedGoalId).toBe("non-existing-id");
   });
 
   it("파라미터 슬라이더를 조작하고 한계값 클램핑 및 기본값으로 리셋할 수 있다", () => {

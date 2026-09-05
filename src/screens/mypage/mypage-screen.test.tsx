@@ -97,6 +97,34 @@ describe("useMyPage hook", () => {
     expect(result.current.profile.riskProfile).toBe("안정 추구형");
   });
 
+  it("handles consecutive toasts without premature clearance", () => {
+    const { result } = renderHook(() => useMyPage(true));
+    act(() => {
+      result.current.handlePasswordChange();
+    });
+    expect(result.current.toastMessage).toBe("비밀번호 변경 안내 메일이 발송되었습니다.");
+
+    // Advance 1s and trigger rediagnosis toast
+    act(() => {
+      vi.advanceTimersByTime(1000);
+      result.current.handleRediagnosis();
+    });
+    expect(result.current.toastMessage).toBe("의사결정 성향이 재진단되었습니다.");
+
+    // Advance 2.1s (total 3.1s since first toast, 2.1s since second toast)
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    // Second toast should still be active
+    expect(result.current.toastMessage).toBe("의사결정 성향이 재진단되었습니다.");
+
+    // Advance remaining 1s
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(result.current.toastMessage).toBeNull();
+  });
+
   it("supports manual toast clear", () => {
     const { result } = renderHook(() => useMyPage(true));
     act(() => {

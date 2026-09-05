@@ -60,15 +60,17 @@ describe("GoalFormView", () => {
       }),
     );
 
-    // 단건 사용 기본 이름
+    // 단건 사용 기본 이름 및 기본 목표 금액
     fireEvent.click(screen.getByRole("button", { name: /특정일 사용 \(단건\)/ }));
     fireEvent.change(screen.getByLabelText("3. 목표 이름"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("5. 목표 금액 (외화)"), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "계획 수립하기" }));
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "외화 목표",
         purposeType: "single",
+        targetAmount: 1000,
       }),
     );
   });
