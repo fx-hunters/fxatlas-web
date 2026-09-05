@@ -6,7 +6,7 @@
 export function App() {
   return (
     <main>
-      <h1>FxAtlas</h1>
+      <h1>Divurve</h1>
     </main>
   );
 }
