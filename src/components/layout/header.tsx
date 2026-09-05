@@ -80,7 +80,7 @@ export function Header({
         <button
           type="button"
           onClick={onNavigateToMypage}
-          aria-label="마이페이지"
+          aria-label="마이페이지 이동"
           style={{
             width: "38px",
             height: "38px",

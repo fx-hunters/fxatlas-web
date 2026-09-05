@@ -25,27 +25,27 @@ describe("App", () => {
     // 환전 플래너 탭으로 이동
     const plannerBtns = screen.getAllByRole("button", { name: /환전 플래너/ });
     fireEvent.click(plannerBtns[0]);
-    expect(screen.getByRole("heading", { name: "환전 플래너" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "환전 플래너", level: 2 })).toBeInTheDocument();
 
     // 내 자산 탭으로 이동
     const assetsBtns = screen.getAllByRole("button", { name: /내 자산/ });
     fireEvent.click(assetsBtns[0]);
-    expect(screen.getByRole("heading", { name: "내 자산 (X-Ray)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "내 자산", level: 2 })).toBeInTheDocument();
 
     // 환율 범위 탭으로 이동
     const rangeBtns = screen.getAllByRole("button", { name: /환율 범위/ });
     fireEvent.click(rangeBtns[0]);
-    expect(screen.getByRole("heading", { name: "환율 범위 (Forecast)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "환율 범위", level: 2 })).toBeInTheDocument();
 
     // 마이페이지 탭으로 이동
     const mypageBtns = screen.getAllByRole("button", { name: /마이페이지/ });
     fireEvent.click(mypageBtns[0]);
-    expect(screen.getByRole("heading", { name: "마이페이지" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
 
     // 연결 확인 탭으로 이동
     const connBtns = screen.getAllByRole("button", { name: /연결 확인/ });
     fireEvent.click(connBtns[0]);
-    expect(screen.getByRole("heading", { name: /연결 확인/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "연결 확인 (Connectivity Check)" })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(fetchConnectivityChecks).toHaveBeenCalled();
@@ -54,8 +54,8 @@ describe("App", () => {
 
   it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", () => {
     render(<App />);
-    const avatarBtn = screen.getByRole("button", { name: "마이페이지" });
+    const avatarBtn = screen.getByRole("button", { name: "마이페이지 이동" });
     fireEvent.click(avatarBtn);
-    expect(screen.getByRole("heading", { name: "마이페이지" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
   });
 });

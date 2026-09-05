@@ -19,6 +19,7 @@ export default defineConfig({
         "**/main.tsx",
         "**/api/generated/**",
         "**/*.d.ts",
+        "**/types/**",
         // 테스트·셋업 파일
         "**/*.test.*",
         "**/src/test/**",

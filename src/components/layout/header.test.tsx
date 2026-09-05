@@ -18,7 +18,7 @@ describe("Header", () => {
 
     expect(screen.getByRole("heading", { name: "환율 범위" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "마이페이지" }));
+    fireEvent.click(screen.getByRole("button", { name: "마이페이지 이동" }));
     expect(onNavigateToMypage).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "라이트 모드로 변경" }));
