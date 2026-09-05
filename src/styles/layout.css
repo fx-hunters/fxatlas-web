@@ -1,0 +1,61 @@
+/*
+ * 반응형 레이아웃 스타일 (App Shell, Sidebar, MobileNav, Grid)
+ */
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.app-main-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  padding-bottom: calc(var(--footer-height) + 1.5rem);
+}
+
+.app-content-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 데스크톱 vs 모바일 내비게이션 반응형 규칙 */
+@media (min-width: 769px) {
+  .mobile-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none !important;
+  }
+
+  .mobile-nav {
+    display: flex !important;
+  }
+
+  .app-scroll-content {
+    padding: 1rem;
+    padding-bottom: calc(var(--mobile-nav-height) + var(--footer-height) + 1rem);
+  }
+
+  .app-footer {
+    padding-bottom: calc(var(--mobile-nav-height) + 0.5rem);
+  }
+}
