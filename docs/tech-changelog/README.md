@@ -29,3 +29,4 @@
 | 번호 | 제목 | 날짜 |
 |---|---|---|
 | [0001](./0001-introduce-technical-change-log.md) | 기술적 변경 로그 체계 도입 | 2026-09-05 |
+| [0002](./0002-clean-code-architecture-principles.md) | 클린 코드·아키텍처 설계 원칙 섹션 추가 | 2026-09-05 |
