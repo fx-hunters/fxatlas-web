@@ -1,7 +1,9 @@
 import type {
+  FitPreviewResponse,
   ForecastBundle,
   MyPageBundle,
   SettingsResponse,
+  StressRunResponse,
   XrayBundle,
 } from "../api/generated/divurve-api";
 import type { PlannerApiOverview } from "../api/planner";
@@ -88,42 +90,122 @@ export const EMPTY_FORECAST_API_FIXTURE: ForecastBundle = {
 export const XRAY_API_FIXTURE: XrayBundle = {
   overview: {
     totalAssetKrw: 20_000_000,
+    krwAssetKrw: 12_000_000,
     fxAssetKrw: 8_000_000,
     fxRatio: 0.4,
     exposure: [
-      { currencyCode: "USD", krw: 6_000_000, share: 0.3 },
-      { currencyCode: "JPY", krw: 2_000_000, share: 0.1 },
+      { currencyCode: "USD", krw: 6_000_000, share: 0.75 },
+      { currencyCode: "JPY", krw: 2_000_000, share: 0.25 },
     ],
-    concentration: {
-      before: { USD: 0.3 },
-      after: { USD: 0.25 },
-      threshold: 0.5,
-      verdict: "within",
-    },
-    sensitivity1pct: { totalKrw: 80_000, byCurrency: { USD: 60_000 } },
+    concentration: { topCurrencyCode: "USD", share: 0.75, status: "over" },
     dayChangeKrw: 30_000,
-    upcomingOutflows: [],
+    sensitivity1pct: { totalKrw: 80_000, byCurrency: { USD: 60_000 } },
   },
   attribution: {
     currencyCode: "USD",
-    mode: "total",
     costBasisKrw: 5_500_000,
     currentKrw: 6_000_000,
     totalReturn: 0.09,
     components: [
-      { key: "local", krw: 320_000, contributionPp: 5.8 },
-      { key: "fx", krw: 180_000, contributionPp: 3.2 },
+      { key: "asset", label: "자산 가격 효과", krw: 320_000, contributionPp: 5.8 },
+      { key: "fx", label: "환율 효과", krw: 180_000, contributionPp: 3.2 },
+      { key: "interaction", label: "상호작용", krw: -20_000, contributionPp: -0.4 },
+      { key: "cost", label: "비용", krw: 0, contributionPp: 0 },
     ],
+    byHolding: [
+      { ticker: "AAPL", krw: 3_200_000, localReturn: 0.12, fxReturn: 0.03, krwReturn: 0.15 },
+      { ticker: "VOO", krw: 2_800_000, localReturn: 0.04, fxReturn: 0.03, krwReturn: -0.02 },
+    ],
+  },
+  fit: {
+    riskProfile: {
+      status: "measured",
+      grade: "B",
+      gradeLabel: "중립형",
+      diagnosedOn: "2026-08-20",
+    },
+    concentration: { topCurrencyCode: "USD", share: 0.75, status: "over" },
+    relation: {
+      code: "concentration_over_threshold",
+      facts: { share: 0.75, threshold: 0.6, gapPp: 15 },
+    },
+    basisNote: "참고 기준선은 MVP 가설값이며 통계적으로 검증된 배분 기준이 아닙니다.",
+  },
+  scenarios: {
+    scenarios: [
+      {
+        scenarioCode: "equity_down_krw_strong",
+        nameKo: "주가 하락 + 원화 강세",
+        equityShockPct: -0.2,
+        fxShockPct: -0.1,
+        referenceEvent: "2008년 금융위기 이후 원화 반등 국면 참고",
+        assumptionNote: "해외주식 평가액에 주가 충격을 먼저 적용합니다.",
+        isDefault: true,
+        sortOrder: 2,
+      },
+      {
+        scenarioCode: "equity_down_krw_weak",
+        nameKo: "주가 하락 + 원화 약세",
+        equityShockPct: -0.2,
+        fxShockPct: 0.1,
+        referenceEvent: "2020년 3월 변동성 급등 참고",
+        assumptionNote: "해외주식 평가액에 주가 충격을 먼저 적용합니다.",
+        isDefault: true,
+        sortOrder: 1,
+      },
+    ],
+  },
+  asOf: "2026-09-06T22:32:19.043Z",
+};
+
+/** 위험성향 미측정 + 자산 없음 계정. 서버는 값이 없는 필드를 키째 생략한다. */
+export const NOT_MEASURED_XRAY_API_FIXTURE: XrayBundle = {
+  ...XRAY_API_FIXTURE,
+  overview: {
+    ...XRAY_API_FIXTURE.overview,
+    exposure: [],
+    concentration: { status: "unknown" },
+  },
+  attribution: {
+    ...XRAY_API_FIXTURE.attribution,
+    components: [],
     byHolding: [],
   },
-  concentration: {
-    exposure: { USD: 0.3, JPY: 0.1 },
-    topCurrency: "USD",
-    topShare: 0.3,
-    threshold: 0.5,
-    status: "within",
-    suggestions: ["현재 분산 수준을 점검하세요."],
+  fit: {
+    riskProfile: { status: "not_measured" },
+    concentration: { status: "unknown" },
+    relation: { code: "risk_profile_not_measured", facts: {} },
+    basisNote: "참고 기준선은 MVP 가설값입니다.",
   },
+  scenarios: { scenarios: [] },
+};
+
+export const STRESS_RUN_FIXTURE: StressRunResponse = {
+  id: "run-1",
+  scenario: {
+    scenarioCode: "equity_down_krw_weak",
+    nameKo: "주가 하락 + 원화 약세",
+    referenceEvent: "2020년 3월 변동성 급등 참고",
+    assumptionNote: "해외주식 평가액에 주가 충격을 먼저 적용합니다.",
+  },
+  baseDate: "2026-09-04",
+  shock: { equityShockPct: -0.2, fxShockPct: 0.1 },
+  before: { equityAssetKrw: 6_000_000, fxAssetKrw: 8_000_000 },
+  effects: {
+    equityEffectKrw: -1_200_000,
+    fxEffectKrw: 680_000,
+    totalEffectKrw: -520_000,
+  },
+  after: { fxAssetKrw: 7_480_000 },
+  interpretationCode: "loss_within_range",
+  conditionalNote: "주가와 환율이 동시에 움직이는 가정입니다.",
+};
+
+export const FIT_PREVIEW_FIXTURE: FitPreviewResponse = {
+  assumption: "앞으로의 매수만 조정한다고 가정합니다.",
+  exposure: { before: { USD: 0.75 }, after: { USD: 0.68 } },
+  concentration: { topCurrencyCode: "USD", share: 0.68, status: "watch" },
+  sensitivity1pct: { before: { USD: 60_000 }, after: { USD: 54_000 } },
 };
 
 export const MY_PAGE_SETTINGS_FIXTURE: SettingsResponse = {

@@ -3,9 +3,9 @@ import { ApiError, request, requestWithMeta } from "./client";
 import { fetchHomeSummary } from "./home";
 import { fetchForecastBundle } from "./forecast";
 import {
-  applyStressScenario,
   fetchXrayBundle,
-  simulateDiversification,
+  previewFitAdjustment,
+  runStressScenario,
 } from "./xray";
 import { fetchMyPageBundle, updateSettings } from "./mypage";
 import {
@@ -46,20 +46,27 @@ describe("screen API modules", () => {
 
   it("X-Ray 묶음 조회와 두 계산 요청을 전달한다", async () => {
     vi.mocked(request).mockImplementation(async (path) => ({ path }));
+    vi.mocked(requestWithMeta).mockImplementation(async (path) => ({
+      data: { path },
+      meta: { asOf: "2026-09-06T22:32:19Z" },
+    }));
     const result = await fetchXrayBundle("USD");
+    expect(result.overview).toEqual({ path: "/api/v1/xray" });
+    expect(result.asOf).toBe("2026-09-06T22:32:19Z");
     expect(result.attribution).toEqual({
       path: "/api/v1/xray/attribution?currency_code=USD",
     });
-    expect(result.overview).toEqual({ path: "/api/v1/xray" });
-    expect(result.concentration).toEqual({ path: "/api/v1/fit/concentration" });
+    expect(result.fit).toEqual({ path: "/api/v1/fit" });
+    expect(result.scenarios).toEqual({ path: "/api/v1/stress/scenarios" });
 
-    await applyStressScenario({ shocks: { USD: -0.1 } });
-    expect(request).toHaveBeenCalledWith("/api/v1/xray/stress", {
+    await runStressScenario({ scenarioCode: "equity_down_krw_weak" });
+    expect(request).toHaveBeenCalledWith("/api/v1/stress/runs", {
       method: "POST",
-      body: { shocks: { USD: -0.1 } },
+      body: { scenarioCode: "equity_down_krw_weak" },
     });
-    await simulateDiversification({ currencyCode: "EUR", deltaShare: 0.1 });
-    expect(request).toHaveBeenCalledWith("/api/v1/fit/simulate", {
+
+    await previewFitAdjustment({ currencyCode: "EUR", deltaShare: 0.1 });
+    expect(request).toHaveBeenCalledWith("/api/v1/fit/preview", {
       method: "POST",
       body: { currencyCode: "EUR", deltaShare: 0.1 },
     });

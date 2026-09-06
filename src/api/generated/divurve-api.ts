@@ -137,101 +137,150 @@ export interface XrayExposure {
   readonly share: number;
 }
 
+/** 서버는 값이 없는 필드를 키째 생략하므로 대부분 optional이다. */
+export interface XrayConcentration {
+  readonly topCurrencyCode?: string;
+  readonly share?: number;
+  readonly status: string;
+}
+
+export interface XraySensitivity {
+  readonly totalKrw: number;
+  readonly byCurrency: Readonly<Record<string, number>>;
+}
+
 export interface XrayResponse {
   readonly totalAssetKrw: number;
+  readonly krwAssetKrw: number;
   readonly fxAssetKrw: number;
   readonly fxRatio: number;
   readonly exposure: readonly XrayExposure[];
-  readonly concentration: {
-    readonly before: Readonly<Record<string, number>>;
-    readonly after: Readonly<Record<string, number>>;
-    readonly threshold: number;
-    readonly verdict: string;
-  };
-  readonly sensitivity1pct: {
-    readonly totalKrw: number;
-    readonly byCurrency: Readonly<Record<string, number>>;
-  };
-  readonly dayChangeKrw: number;
-  readonly upcomingOutflows: readonly {
-    readonly goalId: string;
-    readonly date: string;
-    readonly currencyCode: string;
-    readonly amount: number;
-    readonly hasPlan: boolean;
-  }[];
+  readonly concentration: XrayConcentration;
+  readonly dayChangeKrw?: number;
+  readonly sensitivity1pct: XraySensitivity;
+}
+
+export interface AttributionComponent {
+  readonly key: string;
+  readonly label: string;
+  readonly krw: number;
+  readonly contributionPp: number;
+}
+
+export interface AttributionHolding {
+  readonly ticker: string;
+  readonly krw: number;
+  readonly localReturn: number;
+  readonly fxReturn: number;
+  readonly krwReturn: number;
 }
 
 export interface AttributionResponse {
-  readonly currencyCode: string;
-  readonly mode: string;
+  readonly currencyCode?: string;
   readonly costBasisKrw: number;
   readonly currentKrw: number;
   readonly totalReturn: number;
-  readonly components: readonly {
-    readonly key: string;
-    readonly krw: number;
-    readonly contributionPp: number;
-  }[];
-  readonly byHolding: readonly {
-    readonly ticker: string;
-    readonly krw: number;
-    readonly localReturn: number;
-    readonly fxContributionPp: number;
-    readonly krwReturn: number;
-  }[];
+  readonly components: readonly AttributionComponent[];
+  readonly byHolding: readonly AttributionHolding[];
 }
 
-export interface ConcentrationResponse {
-  readonly exposure: Readonly<Record<string, number>>;
-  readonly topCurrency: string;
-  readonly topShare: number;
-  readonly threshold: number;
+export interface FitRiskProfile {
   readonly status: string;
-  readonly suggestions: readonly string[];
+  readonly grade?: string;
+  readonly gradeLabel?: string;
+  readonly diagnosedOn?: string;
 }
 
-export interface StressRequest {
-  readonly shocks: Readonly<Record<string, number>>;
+export interface FitRelation {
+  readonly code: string;
+  readonly facts: {
+    readonly share?: number;
+    /** 위험성향이 측정된 계정에만 채워진다. */
+    readonly threshold?: number;
+    readonly gapPp?: number;
+  };
 }
 
-export interface StressResponse {
-  readonly totalAssetBeforeKrw: number;
-  readonly totalAssetAfterKrw: number;
-  readonly impactKrw: number;
-  readonly impactRatio: number;
-  readonly byCurrency: readonly {
-    readonly currencyCode: string;
-    readonly shock: number;
-    readonly impactKrw: number;
-  }[];
+export interface FitResponse {
+  readonly riskProfile: FitRiskProfile;
+  readonly concentration: XrayConcentration;
+  readonly relation: FitRelation;
+  readonly basisNote: string;
 }
 
-export interface SimulateRequest {
+export interface StressScenario {
+  readonly scenarioCode: string;
+  readonly nameKo: string;
+  readonly equityShockPct: number;
+  readonly fxShockPct: number;
+  readonly referenceEvent: string;
+  readonly assumptionNote: string;
+  readonly isDefault: boolean;
+  readonly sortOrder: number;
+}
+
+export interface StressScenarioListResponse {
+  readonly scenarios: readonly StressScenario[];
+}
+
+export interface StressRunRequest {
+  readonly scenarioCode: string;
+}
+
+export interface StressRunResponse {
+  readonly id: string;
+  readonly scenario: {
+    readonly scenarioCode: string;
+    readonly nameKo: string;
+    readonly referenceEvent: string;
+    readonly assumptionNote: string;
+  };
+  readonly baseDate: string;
+  readonly shock: {
+    readonly equityShockPct: number;
+    readonly fxShockPct: number;
+  };
+  readonly before: {
+    readonly equityAssetKrw: number;
+    readonly fxAssetKrw: number;
+  };
+  readonly effects: {
+    readonly equityEffectKrw: number;
+    readonly fxEffectKrw: number;
+    readonly totalEffectKrw: number;
+  };
+  readonly after: {
+    readonly fxAssetKrw: number;
+  };
+  readonly interpretationCode: string;
+  readonly conditionalNote: string;
+}
+
+export interface FitPreviewRequest {
   readonly currencyCode: string;
   readonly deltaShare: number;
 }
 
-export interface SimulateResponse {
-  readonly portfolioVol: {
-    readonly before: number;
-    readonly after: number;
+export interface FitPreviewResponse {
+  readonly assumption: string;
+  readonly exposure: {
+    readonly before: Readonly<Record<string, number>>;
+    readonly after: Readonly<Record<string, number>>;
   };
-  readonly exposureAfter: Readonly<Record<string, number>>;
-  readonly threshold: number;
-  readonly withinThreshold: boolean;
-  readonly suggestedGoal?: {
-    readonly kind: string;
-    readonly purpose: string;
-    readonly currencyCode: string;
-    readonly targetAmount: number;
+  readonly concentration: XrayConcentration;
+  readonly sensitivity1pct: {
+    readonly before: Readonly<Record<string, number>>;
+    readonly after: Readonly<Record<string, number>>;
   };
 }
 
 export interface XrayBundle {
   readonly overview: XrayResponse;
   readonly attribution: AttributionResponse;
-  readonly concentration: ConcentrationResponse;
+  readonly fit: FitResponse;
+  readonly scenarios: StressScenarioListResponse;
+  /** 서버가 응답 meta로 알려준 기준 시각(ISO 8601). */
+  readonly asOf: string;
 }
 
 export interface ProfileResponse {

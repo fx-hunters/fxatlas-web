@@ -1,133 +1,156 @@
-import { useState, useCallback, useMemo } from "react";
-import type { XRayDashboardData, XRayTabId, StressScenarioItem } from "../../types/xray";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ApiError } from "../../api/client";
+import {
+  fetchXrayBundle,
+  previewFitAdjustment,
+  runStressScenario,
+} from "../../api/xray";
+import type {
+  FitPreviewRequest,
+  FitPreviewResponse,
+  StressRunRequest,
+  StressRunResponse,
+  XrayBundle,
+} from "../../api/generated/divurve-api";
+import type { XRayTabId } from "../../types/xray";
+import { toStressRunResult, toXRayDashboardData } from "./xray-presenter";
 
-export const DEMO_XRAY_DATA: XRayDashboardData = {
-  fxRatioPct: 64,
-  fxKrw: 64000000,
-  krwAmount: 36000000,
-  exposureBreakdown: {
-    usd: 85,
-    jpy: 10,
-    eur: 5,
-    baselinePct: 60,
-  },
-  scheduledExpenditure: {
-    title: "미국 주식 정기매수",
-    dateLabel: "매월 25일",
-    amountUsd: 1200,
-  },
-  fxSensitivity1PctKrw: 640000,
-  pnl: {
-    costBasisKrw: 58000000,
-    stockReturnKrw: 4200000,
-    stockReturnPct: 7.2,
-    fxReturnKrw: 2100000,
-    fxReturnPct: 3.6,
-    interactionKrw: -150000,
-    interactionPct: -0.2,
-    totalValuationKrw: 64150000,
-    totalReturnPct: 10.6,
-    stockHoldings: [
-      { symbol: "AAPL", returnPct: 12.4 },
-      { symbol: "TSLA", returnPct: -3.2 },
-    ],
-  },
-  scenarios: [
-    {
-      id: "2008",
-      label: "2008 금융위기",
-      stockShockPct: -30,
-      fxShockPct: 15,
-      resultKrw: 52400000,
-      title: "주가 -30%, 환율 +15% 충격 가정",
-      defenseMessage: "포트폴리오 방어 효과 작동",
-    },
-    {
-      id: "2020",
-      label: "2020 팬데믹",
-      stockShockPct: -25,
-      fxShockPct: 8,
-      resultKrw: 54800000,
-      title: "주가 -25%, 환율 +8% 충격 가정",
-      defenseMessage: "단기 급락 후 달러 강세 완충",
-    },
-    {
-      id: "custom",
-      label: "직접 설정",
-      stockShockPct: -20,
-      fxShockPct: 10,
-      resultKrw: 56100000,
-      title: "주가 -20%, 환율 +10% 시나리오",
-      defenseMessage: "사용자 맞춤 시나리오 적용",
-    },
-  ],
-  concentrationPct: 85,
-  concentrationBaselinePct: 60,
-  currencyTraits: [
-    {
-      currency: "USD",
-      volatility: "보통",
-      liquidity: "매우 높음",
-      diversificationContribution: "낮음",
-      isHighContribution: false,
-    },
-    {
-      currency: "JPY",
-      volatility: "높음",
-      liquidity: "높음",
-      diversificationContribution: "매우 높음",
-      isHighContribution: true,
-    },
-    {
-      currency: "EUR",
-      volatility: "보통",
-      liquidity: "높음",
-      diversificationContribution: "높음",
-      isHighContribution: true,
-    },
-  ],
+export interface XRayDependencies {
+  readonly loadBundle: (currencyCode?: string) => Promise<XrayBundle>;
+  readonly runScenario: (input: StressRunRequest) => Promise<StressRunResponse>;
+  readonly previewAdjustment: (
+    input: FitPreviewRequest,
+  ) => Promise<FitPreviewResponse>;
+}
+
+const DEFAULT_DEPENDENCIES: XRayDependencies = {
+  loadBundle: fetchXrayBundle,
+  runScenario: runStressScenario,
+  previewAdjustment: previewFitAdjustment,
 };
 
-export function useXRay() {
+export type XRayState =
+  | { readonly status: "loading" }
+  | { readonly status: "error"; readonly message: string }
+  | { readonly status: "empty" }
+  | { readonly status: "success"; readonly data: XrayBundle };
+
+const FALLBACK_MESSAGE =
+  "내 자산 정보를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.";
+
+export function toErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
+}
+
+export function useXRay(dependencies: XRayDependencies = DEFAULT_DEPENDENCIES) {
   const [activeTab, setActiveTab] = useState<XRayTabId>("exposure");
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string>("2008");
-  const [eurSimulationPct, setEurSimulationPctState] = useState<number>(10);
-  const [isAssetModalOpen, setIsAssetModalOpen] = useState<boolean>(false);
+  const [state, setState] = useState<XRayState>({ status: "loading" });
+  const [reloadKey, setReloadKey] = useState(0);
+  const [selectedScenarioCode, setSelectedScenarioCode] = useState<string>("");
+  const [runState, setRunState] = useState<
+    | { readonly status: "idle" }
+    | { readonly status: "running" }
+    | { readonly status: "error"; readonly message: string }
+    | { readonly status: "done"; readonly run: StressRunResponse }
+  >({ status: "idle" });
+  const [previewState, setPreviewState] = useState<
+    | { readonly status: "idle" }
+    | { readonly status: "running" }
+    | { readonly status: "error"; readonly message: string }
+    | { readonly status: "done"; readonly preview: FitPreviewResponse }
+  >({ status: "idle" });
 
-  const data: XRayDashboardData = useMemo(() => {
-    return DEMO_XRAY_DATA;
+  // 호출자가 의존성 객체를 인라인으로 만들어 넘겨도 조회가 반복되지 않도록
+  // ref로 최신 값만 참조한다. 의존성 교체는 재조회 신호가 아니다.
+  const dependenciesRef = useRef(dependencies);
+  dependenciesRef.current = dependencies;
+
+  useEffect(() => {
+    let isActive = true;
+    setState({ status: "loading" });
+
+    void dependenciesRef.current
+      .loadBundle()
+      .then((bundle) => {
+        if (!isActive) return;
+        setState(
+          bundle.overview.totalAssetKrw === 0
+            ? { status: "empty" }
+            : { status: "success", data: bundle },
+        );
+      })
+      .catch((error: unknown) => {
+        if (!isActive) return;
+        setState({
+          status: "error",
+          message: toErrorMessage(error, FALLBACK_MESSAGE),
+        });
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [reloadKey]);
+
+  const data = useMemo(
+    () => (state.status === "success" ? toXRayDashboardData(state.data) : null),
+    [state],
+  );
+
+  const selectScenario = useCallback((code: string) => {
+    setSelectedScenarioCode(code);
+    setRunState({ status: "running" });
+    void dependenciesRef.current
+      .runScenario({ scenarioCode: code })
+      .then((run) => setRunState({ status: "done", run }))
+      .catch((error: unknown) =>
+        setRunState({
+          status: "error",
+          message: toErrorMessage(
+            error,
+            "시나리오를 계산하지 못했습니다. 잠시 후 다시 확인해 주세요.",
+          ),
+        }),
+      );
   }, []);
 
-  const activeScenario: StressScenarioItem = useMemo(() => {
-    return (
-      data.scenarios.find((s) => s.id === selectedScenarioId) ??
-      data.scenarios[0]
-    );
-  }, [data.scenarios, selectedScenarioId]);
+  const runResult = useMemo(
+    () => (runState.status === "done" ? toStressRunResult(runState.run) : null),
+    [runState],
+  );
 
-  const handleSetEurSimulationPct = useCallback((value: number) => {
-    setEurSimulationPctState(Math.max(0, Math.min(50, value)));
-  }, []);
+  const previewAdjustment = useCallback(
+    (input: FitPreviewRequest) => {
+      setPreviewState({ status: "running" });
+      void dependenciesRef.current
+        .previewAdjustment(input)
+        .then((preview) => setPreviewState({ status: "done", preview }))
+        .catch((error: unknown) =>
+          setPreviewState({
+            status: "error",
+            message: toErrorMessage(
+              error,
+              "조정 결과를 계산하지 못했습니다. 잠시 후 다시 확인해 주세요.",
+            ),
+          }),
+        );
+    },
+    [],
+  );
 
-  const handleOpenAssetModal = useCallback(() => {
-    setIsAssetModalOpen(true);
-  }, []);
-
-  const handleCloseAssetModal = useCallback(() => {
-    setIsAssetModalOpen(false);
-  }, []);
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
   return {
-    data,
     activeTab,
-    selectedScenarioId,
-    activeScenario,
-    eurSimulationPct,
-    isAssetModalOpen,
+    data,
+    state,
+    selectedScenarioCode,
+    runState,
+    runResult,
+    previewState,
     setActiveTab,
-    setSelectedScenarioId,
-    setEurSimulationPct: handleSetEurSimulationPct,
-    openAssetModal: handleOpenAssetModal,
-    closeAssetModal: handleCloseAssetModal,
+    selectScenario,
+    previewAdjustment,
+    reload,
   };
 }
