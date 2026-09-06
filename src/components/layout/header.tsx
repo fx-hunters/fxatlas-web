@@ -39,6 +39,7 @@ export function Header({
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <button
           type="button"
+          data-tour="tour-theme"
           onClick={onToggleTheme}
           aria-label={isDark ? "라이트 모드로 변경" : "다크 모드로 변경"}
           style={{

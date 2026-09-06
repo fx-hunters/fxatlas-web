@@ -19,19 +19,16 @@ describe("WeeklyComparisonCard", () => {
     expect(screen.getByText("+2.1%p")).toBeInTheDocument();
   });
 
-  it("감소한 지표와 낮아진 USD 집중도를 부호와 함께 표시한다", () => {
-    render(
-      <WeeklyComparisonCard
-        data={{
-          fundedRatioDiffPct: -1.5,
-          valuationDiffKrw: -120000,
-          usdConcentrationDiffPctPoints: -0.8,
-        }}
-      />,
-    );
+  it("음수 변동 지표를 올바르게 렌더링한다", () => {
+    const negativeData: WeeklyComparisonData = {
+      fundedRatioDiffPct: -3.2,
+      valuationDiffKrw: -150000,
+      usdConcentrationDiffPctPoints: -1.5,
+    };
+    render(<WeeklyComparisonCard data={negativeData} />);
 
-    expect(screen.getByText("-1.5%")).toBeInTheDocument();
-    expect(screen.getByText("-₩120,000")).toBeInTheDocument();
-    expect(screen.getByText("-0.8%p")).toBeInTheDocument();
+    expect(screen.getByText("-3.2%")).toBeInTheDocument();
+    expect(screen.getByText("-₩150,000")).toBeInTheDocument();
+    expect(screen.getByText("-1.5%p")).toBeInTheDocument();
   });
 });

@@ -33,16 +33,13 @@ describe("FxHoldingCard", () => {
     expect(onNavigateToAssets).toHaveBeenCalled();
   });
 
-  it("전일 대비 값이 음수이면 감소 값으로 표시한다", () => {
-    render(
-      <FxHoldingCard
-        data={{ ...sampleData, dayOverDayDiffPctPoints: -0.4 }}
-      />,
-    );
-
-    expect(screen.getByText("-0.4%p")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "자산 등록 / 편집" }),
-    ).not.toBeInTheDocument();
+  it("음수 변동치와 액션 버튼 없는 상태를 올바르게 렌더링한다", () => {
+    const negativeData: FxHoldingData = {
+      ...sampleData,
+      dayOverDayDiffPctPoints: -0.5,
+    };
+    render(<FxHoldingCard data={negativeData} />);
+    expect(screen.getByText("-0.5%p")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "자산 등록 / 편집" })).not.toBeInTheDocument();
   });
 });

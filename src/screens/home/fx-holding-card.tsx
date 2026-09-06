@@ -83,9 +83,30 @@ export function FxHoldingCard({ data, onNavigateToAssets }: FxHoldingCardProps) 
             }}
             aria-label="통화별 비중 바"
           >
-            <div style={{ width: `${data.breakdown.usd}%`, backgroundColor: "var(--usd)" }} title={`USD ${data.breakdown.usd}%`} />
-            <div style={{ width: `${data.breakdown.jpy}%`, backgroundColor: "var(--jpy)" }} title={`JPY ${data.breakdown.jpy}%`} />
-            <div style={{ width: `${data.breakdown.eur}%`, backgroundColor: "var(--eur)" }} title={`EUR ${data.breakdown.eur}%`} />
+            <div
+              style={{
+                width: `${data.breakdown.usd}%`,
+                backgroundColor: "var(--usd)",
+                transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+              title={`USD ${data.breakdown.usd}%`}
+            />
+            <div
+              style={{
+                width: `${data.breakdown.jpy}%`,
+                backgroundColor: "var(--jpy)",
+                transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+              title={`JPY ${data.breakdown.jpy}%`}
+            />
+            <div
+              style={{
+                width: `${data.breakdown.eur}%`,
+                backgroundColor: "var(--eur)",
+                transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+              title={`EUR ${data.breakdown.eur}%`}
+            />
           </div>
 
           {/* 범례 */}

@@ -13,7 +13,8 @@ describe("HomeScreen", () => {
     fireEvent.click(assetsLink);
     expect(onNavigate).toHaveBeenCalledWith("assets");
 
-    fireEvent.click(screen.getByRole("button", { name: "플래너 확인하기 →" }));
+    const plannerLink = screen.getByRole("button", { name: "플래너 확인하기 →" });
+    fireEvent.click(plannerLink);
     expect(onNavigate).toHaveBeenCalledWith("planner");
   });
 

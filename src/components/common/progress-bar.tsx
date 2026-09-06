@@ -48,12 +48,15 @@ export function ProgressBar({
         }}
       >
         <div
+          className="progress-bar-fill-animated"
           style={{
             width: `${clampedRatio}%`,
             height: "100%",
             backgroundColor: color,
             borderRadius: "inherit",
-            transition: "width 0.4s ease-out",
+            boxShadow: color === "var(--primary)" ? "0 0 8px var(--primary)" : undefined,
+            transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, box-shadow 0.2s ease",
+            transformOrigin: "left",
           }}
         />
       </div>

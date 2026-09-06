@@ -12,7 +12,7 @@ describe("ProgressBar", () => {
   });
 
   it("0~100 사이의 값을 처리하고 경계값을 클램핑한다", () => {
-    render(<ProgressBar ratio={120} />);
+    render(<ProgressBar ratio={120} height="12px" color="var(--usd)" />);
     const bar = screen.getByRole("progressbar");
     expect(bar).toHaveAttribute("aria-valuenow", "100");
   });

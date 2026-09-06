@@ -14,6 +14,7 @@ describe("Icon", () => {
     "moon",
     "bell",
     "user",
+    "shield",
     "alertTriangle",
     "checkCircle",
     "trendingUp",
@@ -21,6 +22,16 @@ describe("Icon", () => {
     "database",
     "sparkles",
     "arrowRight",
+    "chevronDown",
+    "edit",
+    "trash",
+    "check",
+    "eye",
+    "eyeOff",
+    "x",
+    "alertCircle",
+    "logIn",
+    "logOut",
   ];
 
   it.each(iconNames)("%s 아이콘이 렌더링된다", (name) => {
