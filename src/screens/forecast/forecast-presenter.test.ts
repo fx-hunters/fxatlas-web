@@ -12,6 +12,7 @@ import {
   toImpactLabel,
   toPercent,
   toPercentileLabel,
+  toRateLabel,
 } from "./forecast-presenter";
 
 describe("toFanChartData", () => {
@@ -62,6 +63,11 @@ describe("표시용 변환", () => {
     expect(toPercentileLabel(0.63)).toBe("5년 중 63백분위");
   });
 
+  it("환율은 통화와 무관하게 소수 두 자리로 표시한다", () => {
+    expect(toRateLabel(1_330.6027933279192)).toBe("1,330.60");
+    expect(toRateLabel(8.712)).toBe("8.71");
+  });
+
   it("1% 변동 영향액을 로케일 형식으로 표시한다", () => {
     expect(toImpactLabel(12_000)).toBe("12,000");
   });
@@ -83,8 +89,8 @@ describe("toCurrencyForecastInfo", () => {
     const info = toCurrencyForecastInfo(FORECAST_API_FIXTURE, "USD");
 
     expect(info.summary).toEqual({
-      upper: 1_450,
-      lower: 1_350,
+      upperLabel: "1,450.00",
+      lowerLabel: "1,350.00",
       impact: "12,000",
       percentile: "5년 중 63백분위",
       isPercentileWarn: false,

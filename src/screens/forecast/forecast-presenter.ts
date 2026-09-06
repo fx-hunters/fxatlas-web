@@ -44,6 +44,13 @@ export function toPercentileLabel(percentile5y: number): string {
   return `5년 중 ${Math.round(percentile5y * 100)}백분위`;
 }
 
+export function toRateLabel(rate: number): string {
+  return new Intl.NumberFormat("ko-KR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(rate);
+}
+
 export function toImpactLabel(per1pctKrw: number): string {
   return per1pctKrw.toLocaleString("ko-KR");
 }
@@ -103,8 +110,8 @@ export function toCurrencyForecastInfo(
   const { forecast, performance } = bundle;
   return {
     summary: {
-      upper: forecast.interval80.hi,
-      lower: forecast.interval80.lo,
+      upperLabel: toRateLabel(forecast.interval80.hi),
+      lowerLabel: toRateLabel(forecast.interval80.lo),
       impact: toImpactLabel(forecast.userImpact.per1pctKrw),
       percentile: toPercentileLabel(forecast.volatility.volPercentile5y),
       isPercentileWarn:

@@ -245,7 +245,7 @@ function ForecastView({
                 letterSpacing: "-0.02em",
               }}
             >
-              {currencyInfo.summary.lower.toLocaleString()} ~ {currencyInfo.summary.upper.toLocaleString()}
+              {currencyInfo.summary.lowerLabel} ~ {currencyInfo.summary.upperLabel}
             </div>
           </div>
 

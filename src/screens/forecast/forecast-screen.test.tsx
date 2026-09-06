@@ -21,7 +21,7 @@ describe("ForecastScreen", () => {
     expect(screen.getByRole("button", { name: "JPY" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "EUR" })).toBeInTheDocument();
     expect(screen.getByText("80% 범위 (30D)")).toBeInTheDocument();
-    expect(screen.getByText("1,350 ~ 1,450")).toBeInTheDocument();
+    expect(screen.getByText("1,350.00 ~ 1,450.00")).toBeInTheDocument();
     expect(screen.getByText("5년 중 63백분위")).toBeInTheDocument();
     expect(screen.getByText("1% 움직일 때 ₩12,000")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "전망 동인" })).toBeInTheDocument();
