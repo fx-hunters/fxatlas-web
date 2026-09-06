@@ -6,7 +6,8 @@ interface ScreenProps {
   readonly onNavigate?: (tab: NavTabId) => void;
 }
 
-export function MyPageScreen({}: ScreenProps) {
+export function MyPageScreen(props: ScreenProps) {
+  void props;
   return (
     <Card title="마이페이지">
       <div style={{ padding: "2rem 0", textAlign: "center", color: "var(--text-muted)" }}>

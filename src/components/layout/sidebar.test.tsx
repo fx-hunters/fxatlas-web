@@ -34,4 +34,13 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: /라이트 모드로 전환/ }));
     expect(defaultProps.onToggleTheme).toHaveBeenCalled();
   });
+
+  it("데모와 다크 모드가 꺼진 상태의 제어 문구를 표시한다", () => {
+    render(<Sidebar {...defaultProps} isDemo={false} isDark={false} />);
+
+    expect(screen.getByRole("button", { name: "빈 상태 보기" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "다크 모드로 전환" }),
+    ).toBeInTheDocument();
+  });
 });

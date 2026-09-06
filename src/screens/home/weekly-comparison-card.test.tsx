@@ -18,4 +18,20 @@ describe("WeeklyComparisonCard", () => {
     expect(screen.getByText("+₩312,000")).toBeInTheDocument();
     expect(screen.getByText("+2.1%p")).toBeInTheDocument();
   });
+
+  it("감소한 지표와 낮아진 USD 집중도를 부호와 함께 표시한다", () => {
+    render(
+      <WeeklyComparisonCard
+        data={{
+          fundedRatioDiffPct: -1.5,
+          valuationDiffKrw: -120000,
+          usdConcentrationDiffPctPoints: -0.8,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("-1.5%")).toBeInTheDocument();
+    expect(screen.getByText("-₩120,000")).toBeInTheDocument();
+    expect(screen.getByText("-0.8%p")).toBeInTheDocument();
+  });
 });

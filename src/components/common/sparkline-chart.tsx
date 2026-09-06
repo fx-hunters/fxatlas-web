@@ -53,7 +53,9 @@ export function SparklineChart({
     return index === 0 ? `M ${point.x} ${point.y}` : `${acc} L ${point.x} ${point.y}`;
   }, "");
 
-  const areaD = `${pathD} L ${points[points.length - 1]?.x ?? width} ${height} L ${points[0]?.x ?? 0} ${height} Z`;
+  const firstPoint = points[0]!;
+  const lastPoint = points[points.length - 1]!;
+  const areaD = `${pathD} L ${lastPoint.x} ${height} L ${firstPoint.x} ${height} Z`;
 
   return (
     <div className={`sparkline-chart ${className}`} style={{ width: "100%", height: `${height}px` }}>

@@ -6,7 +6,8 @@ interface ScreenProps {
   readonly onNavigate?: (tab: NavTabId) => void;
 }
 
-export function ForecastScreen({}: ScreenProps) {
+export function ForecastScreen(props: ScreenProps) {
+  void props;
   return (
     <Card title="환율 범위 (Forecast)">
       <div style={{ padding: "2rem 0", textAlign: "center", color: "var(--text-muted)" }}>

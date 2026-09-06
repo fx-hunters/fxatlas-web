@@ -16,4 +16,12 @@ describe("ProgressBar", () => {
     const bar = screen.getByRole("progressbar");
     expect(bar).toHaveAttribute("aria-valuenow", "100");
   });
+
+  it("문자열 높이를 그대로 적용한다", () => {
+    render(<ProgressBar ratio={-10} height="0.5rem" />);
+
+    const bar = screen.getByRole("progressbar");
+    expect(bar).toHaveAttribute("aria-valuenow", "0");
+    expect(bar).toHaveStyle({ height: "0.5rem" });
+  });
 });

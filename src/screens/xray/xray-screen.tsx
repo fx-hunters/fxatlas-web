@@ -6,7 +6,8 @@ interface ScreenProps {
   readonly onNavigate?: (tab: NavTabId) => void;
 }
 
-export function XRayScreen({}: ScreenProps) {
+export function XRayScreen(props: ScreenProps) {
+  void props;
   return (
     <Card title="내 자산 (X-Ray)">
       <div style={{ padding: "2rem 0", textAlign: "center", color: "var(--text-muted)" }}>

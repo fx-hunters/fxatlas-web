@@ -1,5 +1,4 @@
 import { Icon } from "../common/icon";
-import type { NavTabId } from "../../types/navigation";
 
 interface HeaderProps {
   readonly onNavigateToMypage: () => void;
