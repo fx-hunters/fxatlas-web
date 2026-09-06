@@ -27,7 +27,7 @@ beforeEach(() => vi.clearAllMocks());
 
 describe("screen API modules", () => {
   it("홈 요약을 메타와 함께 조회한다", async () => {
-    const result = { data: { notice: { message: "ok" } }, meta: { timestamp: "t" } };
+    const result = { data: { notice: { message: "ok" } }, meta: { asOf: "t" } };
     vi.mocked(requestWithMeta).mockResolvedValue(result);
     await expect(fetchHomeSummary()).resolves.toEqual(result);
     expect(requestWithMeta).toHaveBeenCalledWith("/api/v1/home/summary");
@@ -36,9 +36,9 @@ describe("screen API modules", () => {
   it("환율 범위 관련 공개 API 네 개를 한 번에 조회한다", async () => {
     vi.mocked(request).mockImplementation(async (path) => ({ path }));
     const result = await fetchForecastBundle("USD_KRW", 30);
-    expect(result.forecast).toEqual({ path: "/api/v1/forecast?pairCode=USD_KRW&horizon=30" });
-    expect(result.factors).toEqual({ path: "/api/v1/forecast/factors?pairCode=USD_KRW" });
-    expect(result.performance).toEqual({ path: "/api/v1/forecast/model-performance?pairCode=USD_KRW&horizon=30" });
+    expect(result.forecast).toEqual({ path: "/api/v1/forecast?pair_code=USD_KRW&horizon_days=30" });
+    expect(result.factors).toEqual({ path: "/api/v1/forecast/factors?pair_code=USD_KRW" });
+    expect(result.performance).toEqual({ path: "/api/v1/forecast/model-performance?pair_code=USD_KRW&horizon_days=30" });
     expect(result.events).toEqual({ path: "/api/v1/events" });
     expect(request).toHaveBeenCalledTimes(4);
     expect(request).toHaveBeenCalledWith(expect.any(String), { requiresAuth: false });
@@ -48,7 +48,7 @@ describe("screen API modules", () => {
     vi.mocked(request).mockImplementation(async (path) => ({ path }));
     const result = await fetchXrayBundle("USD");
     expect(result.attribution).toEqual({
-      path: "/api/v1/xray/attribution?currencyCode=USD",
+      path: "/api/v1/xray/attribution?currency_code=USD",
     });
     expect(result.overview).toEqual({ path: "/api/v1/xray" });
     expect(result.concentration).toEqual({ path: "/api/v1/fit/concentration" });

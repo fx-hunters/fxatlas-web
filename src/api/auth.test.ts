@@ -25,6 +25,7 @@ const apiSession = {
   refreshToken: "refresh",
   expiresIn: 1800,
   isDemo: false,
+  onboarded: true,
 };
 
 beforeEach(() => {

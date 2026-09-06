@@ -50,7 +50,7 @@ describe("API URL helpers", () => {
         enabled: true,
         omitted: undefined,
       }),
-    ).toBe("/forecast?pairCode=USD%2FKRW&horizon=30&enabled=true");
+    ).toBe("/forecast?pair_code=USD%2FKRW&horizon=30&enabled=true");
     expect(apiPath("/events", { omitted: undefined })).toBe("/events");
   });
 });
@@ -92,11 +92,12 @@ describe("request", () => {
       refreshToken: "refresh",
       expiresIn: 1800,
       isDemo: true,
+      onboarded: true,
     });
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({
         data: { created_at: "t" },
-        meta: { timestamp: "now", source_names: ["server"] },
+        meta: { asOf: "now", source_names: ["server"] },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -109,7 +110,7 @@ describe("request", () => {
 
     expect(result).toEqual({
       data: { createdAt: "t" },
-      meta: { timestamp: "now", sourceNames: ["server"] },
+      meta: { asOf: "now", sourceNames: ["server"] },
     });
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const headers = new Headers(requestInit.headers);
@@ -177,7 +178,7 @@ describe("request", () => {
     const fetchMock = vi
       .fn()
       .mockRejectedValueOnce(new Error("offline"))
-      .mockResolvedValueOnce(jsonResponse({ meta: { timestamp: "now" } }));
+      .mockResolvedValueOnce(jsonResponse({ meta: { asOf: "now" } }));
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
@@ -200,6 +201,6 @@ describe("request", () => {
     ).resolves.toBeUndefined();
     await expect(
       requestWithMeta<string>("/ok", { requiresAuth: false }, env),
-    ).resolves.toEqual({ data: "ok", meta: { timestamp: "" } });
+    ).resolves.toEqual({ data: "ok", meta: { asOf: "" } });
   });
 });

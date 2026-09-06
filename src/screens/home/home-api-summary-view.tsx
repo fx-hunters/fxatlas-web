@@ -10,7 +10,7 @@ interface HomeApiSummaryViewProps {
 
 export function HomeApiSummaryView({ result }: HomeApiSummaryViewProps) {
   const { data, meta } = result;
-  const referenceTime = data.referenceTime || meta.timestamp;
+  const referenceTime = data.referenceTime || meta.asOf;
 
   return (
     <section aria-label="API 홈 요약" style={{ display: "grid", gap: "1.5rem" }}>

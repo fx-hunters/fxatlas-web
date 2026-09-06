@@ -26,7 +26,7 @@ describe("useHomeDashboard", () => {
   });
 
   it("API 응답에 내용이 없을 때 empty 상태를 반환한다", async () => {
-    const loader = vi.fn().mockResolvedValue({ data: {}, meta: { timestamp: "" } });
+    const loader = vi.fn().mockResolvedValue({ data: {}, meta: { asOf: "" } });
     const { result } = renderHook(() => useHomeDashboard(false, loader));
     await waitFor(() => expect(result.current.state.status).toBe("empty"));
   });
@@ -45,11 +45,11 @@ describe("useHomeDashboard", () => {
       .fn()
       .mockResolvedValueOnce({
         data: { notice: { message: "첫 응답" } },
-        meta: { timestamp: "2026-09-07T00:00:00Z" },
+        meta: { asOf: "2026-09-07T00:00:00Z" },
       })
       .mockResolvedValueOnce({
         data: { notice: { message: "새 응답" } },
-        meta: { timestamp: "2026-09-07T01:00:00Z" },
+        meta: { asOf: "2026-09-07T01:00:00Z" },
       });
     const { result } = renderHook(() => useHomeDashboard(false, loader));
 
@@ -79,7 +79,7 @@ describe("useHomeDashboard", () => {
   it("언마운트된 뒤 도착한 API 성공과 실패 응답을 무시한다", async () => {
     const pendingSuccess = deferred<{
       data: { notice: { message: string } };
-      meta: { timestamp: string };
+      meta: { asOf: string };
     }>();
     const successLoader = () => pendingSuccess.promise;
     const successHook = renderHook(() =>
@@ -88,7 +88,7 @@ describe("useHomeDashboard", () => {
     successHook.unmount();
     await act(async () => pendingSuccess.resolve({
       data: { notice: { message: "늦은 응답" } },
-      meta: { timestamp: "" },
+      meta: { asOf: "" },
     }));
 
     const pendingFailure = deferred<never>();

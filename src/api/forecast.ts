@@ -14,7 +14,7 @@ export async function fetchForecastBundle(
   const publicRequest = { requiresAuth: false } as const;
   const [forecast, factors, performance, events] = await Promise.all([
     request<ForecastResponse>(
-      apiPath("/api/v1/forecast", { pairCode, horizon }),
+      apiPath("/api/v1/forecast", { pairCode, horizonDays: horizon }),
       publicRequest,
     ),
     request<FactorsResponse>(
@@ -22,7 +22,10 @@ export async function fetchForecastBundle(
       publicRequest,
     ),
     request<ModelPerformanceResponse>(
-      apiPath("/api/v1/forecast/model-performance", { pairCode, horizon }),
+      apiPath("/api/v1/forecast/model-performance", {
+        pairCode,
+        horizonDays: horizon,
+      }),
       publicRequest,
     ),
     request<EventsResponse>("/api/v1/events", publicRequest),

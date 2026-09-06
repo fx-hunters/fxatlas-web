@@ -133,6 +133,11 @@ export const MY_PAGE_SETTINGS_FIXTURE: SettingsResponse = {
   explainDomain: "plain",
   baseSpreadRatio: 0.01,
   effectiveSpreadRatio: 0.002,
+  notifyStepDue: true,
+  notifyRegimeShift: true,
+  notifyDeadlineNear: true,
+  notifyTargetZone: false,
+  notifyConcentration: true,
 };
 
 export const MY_PAGE_API_FIXTURE: MyPageBundle = {
@@ -141,12 +146,19 @@ export const MY_PAGE_API_FIXTURE: MyPageBundle = {
     email: "planner@example.com",
     name: "플래너 사용자",
     isDemo: false,
+    onboarded: true,
+    onboardedAt: "2026-09-01T00:00:00Z",
   },
   settings: MY_PAGE_SETTINGS_FIXTURE,
   riskProfile: {
-    riskType: "balanced",
+    status: "measured",
+    grade: "balanced",
+    gradeLabel: "균형 항로형",
     score: 72,
-    answers: [],
+    diagnosedOn: "2026-08-15",
+    concentrationThreshold: 0.5,
+    limitationNote:
+      "이 판정은 해커톤 MVP용 가설이며 통계적으로 검증된 금융회사 표준 진단이 아닙니다.",
   },
   notifications: {
     notifications: [
