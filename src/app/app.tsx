@@ -246,8 +246,6 @@ export function App({ ensureSession }: AppProps = {}) {
             )}
             {activeTab === "mypage" && (
               <MyPageScreen
-                isDemo={isDemoAccount}
-                isLoggedIn={true}
                 onNavigate={navigate}
                 onLogin={goToLogin}
                 onLogout={handleLogout}

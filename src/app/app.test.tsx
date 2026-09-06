@@ -4,6 +4,8 @@ import { fetchConnectivityChecks } from "../api/connectivity";
 import { App, shouldShowTour, TOUR_STORAGE_KEY } from "./app";
 import { login, startDemoSession } from "../api/auth";
 import { fetchHomeSummary } from "../api/home";
+import { fetchMyPageBundle } from "../api/mypage";
+import { MY_PAGE_API_FIXTURE } from "../test/api-fixtures";
 import { ApiError } from "../api/client";
 import { readApiSession } from "../api/session";
 
@@ -12,6 +14,7 @@ const STANDARD_AUTH_SESSION = {
   refreshToken: "refresh",
   expiresIn: 1800,
   isDemo: false,
+  onboarded: true,
 };
 
 vi.mock("../api/connectivity", () => ({
@@ -28,15 +31,21 @@ vi.mock("../api/auth", () => ({
     refreshToken: "refresh",
     expiresIn: 1800,
     isDemo: true,
+    onboarded: true,
   }),
 }));
 
 vi.mock("../api/session", () => ({ readApiSession: vi.fn().mockReturnValue(null) }));
 
+vi.mock("../api/mypage", () => ({
+  fetchMyPageBundle: vi.fn(),
+  updateSettings: vi.fn(),
+}));
+
 vi.mock("../api/home", () => ({
   fetchHomeSummary: vi.fn().mockResolvedValue({
     data: { notice: { message: "API 연결됨" } },
-    meta: { timestamp: "2026-09-06T00:00:00Z" },
+    meta: { asOf: "2026-09-06T00:00:00Z" },
   }),
 }));
 
@@ -53,10 +62,12 @@ beforeEach(() => {
     refreshToken: "refresh",
     expiresIn: 1800,
     isDemo: true,
+    onboarded: true,
   });
+  vi.mocked(fetchMyPageBundle).mockResolvedValue(MY_PAGE_API_FIXTURE);
   vi.mocked(fetchHomeSummary).mockResolvedValue({
     data: { notice: { message: "API 연결됨" } },
-    meta: { timestamp: "2026-09-06T00:00:00Z" },
+    meta: { asOf: "2026-09-06T00:00:00Z" },
   });
 });
 
@@ -333,6 +344,7 @@ describe("App", () => {
         refreshToken: "refresh",
         expiresIn: 1800,
         isDemo: true,
+        onboarded: true,
       });
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: /대시보드 체험하기/ }));
@@ -525,6 +537,7 @@ describe("App", () => {
 
   it("마이페이지에서 로그아웃 버튼 클릭 시 랜딩 페이지로 복귀한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
     render(<App />);
 
     // 대시보드 진입
@@ -538,7 +551,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
 
     // 로그아웃 버튼 클릭
-    const logoutBtn = screen.getByRole("button", { name: "로그아웃" });
+    const logoutBtn = await screen.findByRole("button", { name: "로그아웃" });
     fireEvent.click(logoutBtn);
 
     // 랜딩 페이지로 복귀 확인
@@ -559,7 +572,7 @@ describe("App", () => {
     fireEvent.click(mypageBtn);
 
     // 가이드 투어 다시보기 클릭
-    const tourBtn = screen.getByRole("button", { name: /가이드 투어 다시보기/ });
+    const tourBtn = await screen.findByRole("button", { name: /가이드 투어 다시보기/ });
     fireEvent.click(tourBtn);
 
     // 온보딩 웰컴 모달 표시 확인
