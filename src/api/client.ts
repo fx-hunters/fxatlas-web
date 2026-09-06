@@ -2,9 +2,15 @@ import { getApiAccessToken } from "./session";
 
 type ApiEnv = Pick<ImportMetaEnv, "VITE_API_URL">;
 
+/** 모든 응답이 함께 싣는 메타. 백엔드 `Meta` 스키마와 같은 형태다. */
 export interface ApiMeta {
-  readonly timestamp: string;
-  readonly sources?: readonly unknown[];
+  /** 데이터 기준 시각(ISO 8601). 값이 없으면 빈 문자열. */
+  readonly asOf: string;
+  readonly dataState?: string;
+  readonly sources?: readonly string[];
+  readonly isDemo?: boolean;
+  readonly regime?: string;
+  readonly modelVersion?: string;
 }
 
 export interface ApiResult<T> {
@@ -54,13 +60,19 @@ export function apiUrl(path: string, env?: ApiEnv): string {
   return `${resolveApiBaseUrl(env)}/${path.replace(/^\/+/, "")}`;
 }
 
+/**
+ * 쿼리 문자열을 붙인다.
+ *
+ * 백엔드 쿼리 파라미터는 snake_case이므로(예: `pair_code`) 요청 바디와 같은
+ * 규칙으로 여기서 한 번에 변환한다. 호출부는 camelCase만 쓴다.
+ */
 export function apiPath(
   path: string,
   params: Readonly<Record<string, string | number | boolean | undefined>>,
 ): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) query.set(key, String(value));
+    if (value !== undefined) query.set(camelToSnakeKey(key), String(value));
   }
   const serialized = query.toString();
   return serialized ? `${path}?${serialized}` : path;
@@ -108,8 +120,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function parseMeta(value: unknown): ApiMeta {
   const converted = toCamelCase(value);
-  if (!isRecord(converted) || typeof converted.timestamp !== "string") {
-    return { timestamp: "" };
+  if (!isRecord(converted) || typeof converted.asOf !== "string") {
+    return { asOf: "" };
   }
   return converted as unknown as ApiMeta;
 }
@@ -132,7 +144,7 @@ function toApiError(payload: unknown, status: number): ApiError {
 
 async function parseResponseBody(response: Response): Promise<unknown> {
   if (response.status === 204) {
-    return { data: undefined, meta: { timestamp: "" } };
+    return { data: undefined, meta: { asOf: "" } };
   }
   try {
     return await response.json();

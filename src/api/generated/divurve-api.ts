@@ -8,6 +8,7 @@ export interface TokenResponse {
   readonly refreshToken: string;
   readonly expiresIn: number;
   readonly isDemo: boolean;
+  readonly onboarded: boolean;
 }
 
 export interface LoginRequest {
@@ -238,7 +239,17 @@ export interface ProfileResponse {
   readonly email: string;
   readonly name: string;
   readonly isDemo: boolean;
+  readonly onboarded: boolean;
+  readonly onboardedAt?: string;
 }
+
+/** 알림 설정 항목. `SettingsResponse`와 `SettingsUpdateRequest`가 공유한다. */
+export type NotificationSettingKey =
+  | "notifyStepDue"
+  | "notifyRegimeShift"
+  | "notifyDeadlineNear"
+  | "notifyTargetZone"
+  | "notifyConcentration";
 
 export interface SettingsResponse {
   readonly defaultBankCode?: string;
@@ -247,33 +258,56 @@ export interface SettingsResponse {
   readonly explainDomain: string;
   readonly baseSpreadRatio: number;
   readonly effectiveSpreadRatio: number;
+  readonly notifyStepDue: boolean;
+  readonly notifyRegimeShift: boolean;
+  readonly notifyDeadlineNear: boolean;
+  readonly notifyTargetZone: boolean;
+  readonly notifyConcentration: boolean;
 }
 
-export interface RiskAnswer {
-  readonly questionCode: string;
-  readonly choice: number;
+export interface RiskProfileSimple {
+  readonly answers: Readonly<Record<string, unknown>>;
+  readonly rationale?: readonly unknown[];
+  readonly mixedResponseNote?: string;
+}
+
+export interface RiskProfileDetail {
+  readonly completed: boolean;
+  readonly answered: Readonly<Record<string, unknown>>;
+  readonly nextQuestion?: string;
+  readonly titleModifier?: string;
 }
 
 export interface RiskProfileResponse {
-  readonly riskType: string;
-  readonly score: number;
-  readonly answers: readonly RiskAnswer[];
+  /** 예: "not_measured". 진단 전에도 200으로 내려온다. */
+  readonly status: string;
+  readonly grade?: string;
+  readonly gradeLabel?: string;
+  readonly score?: number;
+  readonly diagnosedOn?: string;
+  readonly concentrationThreshold?: number;
+  readonly simple?: RiskProfileSimple;
+  readonly detail?: RiskProfileDetail;
+  readonly limitationNote?: string;
+}
+
+export interface NotificationDto {
+  readonly id: string;
+  readonly type: string;
+  readonly title: string;
+  readonly message: string;
+  readonly createdAt: string;
+  readonly read: boolean;
 }
 
 export interface NotificationsResponse {
-  readonly notifications: readonly {
-    readonly id: string;
-    readonly type: string;
-    readonly title: string;
-    readonly message: string;
-    readonly createdAt: string;
-    readonly read: boolean;
-  }[];
+  readonly notifications: readonly NotificationDto[];
 }
 
 export interface MyPageBundle {
   readonly profile: ProfileResponse;
   readonly settings: SettingsResponse;
+  /** 진단 전에도 `status: "not_measured"`로 내려온다. 404일 때만 null. */
   readonly riskProfile: RiskProfileResponse | null;
   readonly notifications: NotificationsResponse;
 }
@@ -283,6 +317,11 @@ export interface SettingsUpdateRequest {
   readonly fxDiscountRatio?: number;
   readonly explainLevel?: string;
   readonly explainDomain?: string;
+  readonly notifyStepDue?: boolean;
+  readonly notifyRegimeShift?: boolean;
+  readonly notifyDeadlineNear?: boolean;
+  readonly notifyTargetZone?: boolean;
+  readonly notifyConcentration?: boolean;
 }
 
 export interface GoalResponse {

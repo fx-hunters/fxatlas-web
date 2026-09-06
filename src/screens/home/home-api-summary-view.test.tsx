@@ -16,7 +16,7 @@ describe("HomeApiSummaryView", () => {
             marketSummary: { summary: "시장 흐름 안정" },
             referenceTime: "2026-09-07T00:00:00Z",
           },
-          meta: { timestamp: "2026-09-06T00:00:00Z" },
+          meta: { asOf: "2026-09-06T00:00:00Z" },
         }}
       />,
     );
@@ -36,7 +36,7 @@ describe("HomeApiSummaryView", () => {
       <HomeApiSummaryView
         result={{
           data: {},
-          meta: { timestamp: "not-a-date" },
+          meta: { asOf: "not-a-date" },
         }}
       />,
     );

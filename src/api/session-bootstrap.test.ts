@@ -11,6 +11,7 @@ const DEMO_SESSION = {
   refreshToken: "refresh",
   expiresIn: 1800,
   isDemo: true,
+  onboarded: true,
 };
 
 beforeEach(() => {

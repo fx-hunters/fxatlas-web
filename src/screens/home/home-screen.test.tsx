@@ -20,7 +20,7 @@ describe("HomeScreen", () => {
 
   it("API 빈 상태일 때 HomeEmptyView를 렌더링하고 플래너로 이동할 수 있다", async () => {
     const onNavigate = vi.fn();
-    const loadSummary = vi.fn().mockResolvedValue({ data: {}, meta: { timestamp: "" } });
+    const loadSummary = vi.fn().mockResolvedValue({ data: {}, meta: { asOf: "" } });
     render(<HomeScreen isDemo={false} onNavigate={onNavigate} loadSummary={loadSummary} />);
 
     expect(await screen.findByRole("heading", { name: "외화 목표가 없습니다" })).toBeInTheDocument();
@@ -33,11 +33,11 @@ describe("HomeScreen", () => {
   it("API 로딩, 오류, 재시도와 성공 상태를 표시한다", async () => {
     let resolveFirst!: (value: {
       data: { notice: { message: string } };
-      meta: { timestamp: string };
+      meta: { asOf: string };
     }) => void;
     const first = new Promise<{
       data: { notice: { message: string } };
-      meta: { timestamp: string };
+      meta: { asOf: string };
     }>((resolve) => {
       resolveFirst = resolve;
     });
@@ -47,7 +47,7 @@ describe("HomeScreen", () => {
       .mockRejectedValueOnce(new Error("network"))
       .mockResolvedValueOnce({
         data: { notice: { message: "연결됨" } },
-        meta: { timestamp: "" },
+        meta: { asOf: "" },
       });
     const { rerender } = render(
       <HomeScreen
@@ -60,7 +60,7 @@ describe("HomeScreen", () => {
     expect(screen.getByText("홈 정보를 불러오는 중입니다")).toBeInTheDocument();
     resolveFirst({
       data: { notice: { message: "첫 응답" } },
-      meta: { timestamp: "" },
+      meta: { asOf: "" },
     });
     expect(await screen.findByText("첫 응답")).toBeInTheDocument();
 
