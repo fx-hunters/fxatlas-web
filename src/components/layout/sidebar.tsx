@@ -1,21 +1,21 @@
+import type { AccountKind } from "../../app/session-state";
 import { NAV_ITEMS, type NavTabId } from "../../types/navigation";
 import { Icon } from "../common/icon";
 
 interface SidebarProps {
   readonly activeTab: NavTabId;
-  readonly isDemo: boolean;
+  readonly accountKind: AccountKind;
   readonly onSelectTab: (tab: NavTabId) => void;
-  readonly onToggleDemo: () => void;
-  readonly isDemoSwitching?: boolean;
+  readonly onLogin?: () => void;
 }
 
 export function Sidebar({
   activeTab,
-  isDemo,
+  accountKind,
   onSelectTab,
-  onToggleDemo,
-  isDemoSwitching = false,
+  onLogin,
 }: SidebarProps) {
+  const isDemoAccount = accountKind === "demo";
   return (
     <aside
       className="sidebar"
@@ -115,7 +115,7 @@ export function Sidebar({
         })}
       </nav>
 
-      {/* 하단 유틸리티 (데모 토글, 기준일) */}
+      {/* 하단 유틸리티 (계정 종류 표시) */}
       <div
         style={{
           padding: "1rem",
@@ -125,33 +125,42 @@ export function Sidebar({
           gap: "0.5rem",
         }}
       >
-        <button
-          type="button"
-          onClick={onToggleDemo}
-          disabled={isDemoSwitching}
+        <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
             fontSize: "0.75rem",
             fontWeight: 500,
-            color: isDemo ? "var(--primary)" : "var(--text-muted)",
+            color: isDemoAccount ? "var(--primary)" : "var(--text-muted)",
             padding: "0.5rem 0.625rem",
             borderRadius: "var(--radius-sm)",
             backgroundColor: "var(--surface-subtle)",
             border: "1px solid var(--border)",
-            transition: "all 0.15s",
           }}
         >
-          <Icon name={isDemo ? "checkCircle" : "database"} size={14} />
-          <span>
-            {isDemoSwitching
-              ? "API 연결 중…"
-              : isDemo
-                ? "목 데이터 사용 중"
-                : "API 데이터 사용 중"}
-          </span>
-        </button>
+          <Icon name={isDemoAccount ? "checkCircle" : "database"} size={14} />
+          <span>{isDemoAccount ? "데모 계정" : "내 계정"}</span>
+        </div>
+
+        {isDemoAccount && onLogin && (
+          <button
+            type="button"
+            onClick={onLogin}
+            style={{
+              fontSize: "0.6875rem",
+              fontWeight: 700,
+              color: "var(--primary)",
+              padding: "0.5rem 0.625rem",
+              borderRadius: "var(--radius-sm)",
+              backgroundColor: "var(--bg)",
+              border: "1px solid var(--border)",
+              textAlign: "center",
+            }}
+          >
+            로그인하고 내 자산 보기
+          </button>
+        )}
 
         <div
           style={{
@@ -165,7 +174,7 @@ export function Sidebar({
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          {isDemo ? "예시 데이터" : "Swagger API 연결"}
+          {isDemoAccount ? "데모 계정 데이터" : "내 계정 데이터"}
         </div>
       </div>
     </aside>

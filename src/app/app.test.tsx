@@ -41,6 +41,7 @@ vi.mock("../api/home", () => ({
 }));
 
 beforeEach(() => {
+  vi.clearAllMocks();
   localStorage.clear();
   sessionStorage.clear();
   window.history.replaceState(null, "", "/");
@@ -75,20 +76,20 @@ afterEach(() => {
 });
 
 describe("shouldShowTour helper", () => {
-  it("최초 접속(null)이거나 레거시/비정상 값이면 true를 반환한다", () => {
+  it("최초 접속(null)이거나 레거시/비정상 값이면 true를 반환한다", async () => {
     expect(shouldShowTour(null)).toBe(true);
     expect(shouldShowTour("1")).toBe(true);
     expect(shouldShowTour("abc")).toBe(true);
     expect(shouldShowTour("0")).toBe(true);
   });
 
-  it("최근 7일 이내에 투어를 완료한 경우 false를 반환한다", () => {
+  it("최근 7일 이내에 투어를 완료한 경우 false를 반환한다", async () => {
     const now = Date.now();
     const recent = (now - 2 * 24 * 60 * 60 * 1000).toString(); // 2일 전
     expect(shouldShowTour(recent, now)).toBe(false);
   });
 
-  it("7일 이상 미접속한(오랜만에 접속한) 유저인 경우 true를 반환한다", () => {
+  it("7일 이상 미접속한(오랜만에 접속한) 유저인 경우 true를 반환한다", async () => {
     const now = Date.now();
     const dormant = (now - 8 * 24 * 60 * 60 * 1000).toString(); // 8일 전
     expect(shouldShowTour(dormant, now)).toBe(true);
@@ -107,6 +108,7 @@ describe("App", () => {
 
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     // 온보딩 웰컴 모달 표시 확인
     expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
@@ -127,29 +129,31 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "오늘의 행동 (이번 주 확보액)" })).toBeInTheDocument();
   });
 
-  it("localStorage에 최근 투어 완료 기록이 있으면 투어를 띄우지 않고 즉시 대시보드로 진입한다", () => {
+  it("localStorage에 최근 투어 완료 기록이 있으면 투어를 띄우지 않고 즉시 대시보드로 진입한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     expect(screen.queryByRole("dialog", { name: "온보딩 웰컴" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
   });
 
-  it("오랜만에 접속한 유저(7일 초과)는 대시보드 진입 시 투어가 다시 표시된다", () => {
+  it("오랜만에 접속한 유저(7일 초과)는 대시보드 진입 시 투어가 다시 표시된다", async () => {
     const eightDaysAgo = (Date.now() - 8 * 24 * 60 * 60 * 1000).toString();
     localStorage.setItem(TOUR_STORAGE_KEY, eightDaysAgo);
     render(<App />);
 
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
   });
 
-  it("localStorage 접근 에러가 발생해도 안전하게 투어를 표시하고 종료할 수 있다", () => {
+  it("localStorage 접근 에러가 발생해도 안전하게 투어를 표시하고 종료할 수 있다", async () => {
     const getItemSpy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("SecurityError");
     });
@@ -160,6 +164,7 @@ describe("App", () => {
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
 
@@ -179,6 +184,7 @@ describe("App", () => {
     // 랜딩 페이지 -> 대시보드 진입
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     // 환전 플래너 탭으로 이동
     const plannerBtns = screen.getAllByRole("button", { name: /환전 플래너/ });
@@ -216,35 +222,43 @@ describe("App", () => {
     });
   });
 
-  it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", () => {
+  it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     const avatarBtn = screen.getByRole("button", { name: "마이페이지 이동" });
     fireEvent.click(avatarBtn);
     expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
   });
 
-  it("목 데이터와 API 데이터 전환 및 테마 토글이 정상 동작한다", async () => {
+  it("세션이 없으면 데모 계정을 발급받아 데모 배지와 테마 토글을 표시한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
-    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
-    fireEvent.click(startBtn);
+    fireEvent.click(screen.getByRole("button", { name: /대시보드 체험하기/ }));
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
-    const demoToggle = screen.getByRole("button", { name: /목 데이터 사용 중/ });
-    expect(demoToggle).toBeInTheDocument();
+    expect(await screen.findByText("데모 계정")).toBeInTheDocument();
+    expect(startDemoSession).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("button", { name: "로그인하고 내 자산 보기" }),
+    ).toBeInTheDocument();
 
-    fireEvent.click(demoToggle);
-    expect(await screen.findByRole("button", { name: /API 데이터 사용 중/ })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /API 데이터 사용 중/ }));
-    expect(screen.getByRole("button", { name: /목 데이터 사용 중/ })).toBeInTheDocument();
-
-    const themeToggle = screen.getByRole("button", { name: /라이트 모드로 변경/ });
-    fireEvent.click(themeToggle);
+    fireEvent.click(screen.getByRole("button", { name: /라이트 모드로 변경/ }));
     expect(screen.getByRole("button", { name: /다크 모드로 변경/ })).toBeInTheDocument();
+  });
+
+  it("회원 계정 세션에서는 내 계정 배지를 표시하고 데모 발급을 하지 않는다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: /대시보드 체험하기/ }));
+    await screen.findByRole("heading", { name: "DIVURVE" });
+
+    expect(await screen.findByText("내 계정")).toBeInTheDocument();
+    expect(startDemoSession).not.toHaveBeenCalled();
   });
 
   it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", async () => {
@@ -252,6 +266,7 @@ describe("App", () => {
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     const mobileNav = screen.getByRole("navigation", { name: "모바일 하단 내비게이션" });
     const mobilePlannerBtn = mobileNav.querySelector("button:nth-child(2)");
@@ -267,27 +282,26 @@ describe("App", () => {
     }
   });
 
-  it("사이드바에서 API 모드로 전환하면 서버 홈 요약을 표시한다", async () => {
+  it("회원 계정에서는 서버 홈 요약을 표시한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
     render(<App />);
     fireEvent.click(
       screen.getByRole("button", { name: /대시보드 체험하기/ }),
     );
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
-    fireEvent.click(screen.getByRole("button", { name: "목 데이터 사용 중" }));
-
-    expect(
-      await screen.findByText("API 연결됨"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("API 연결됨")).toBeInTheDocument();
   });
 
-  it("API 모드에서 플래너 탭은 Swagger 화면을 렌더링한다", async () => {
+  it("회원 계정의 플래너 탭은 Swagger 화면을 렌더링한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
     render(<App />);
     fireEvent.click(
       screen.getByRole("button", { name: /대시보드 체험하기/ }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "목 데이터 사용 중" }));
+    await screen.findByRole("heading", { name: "DIVURVE" });
     await screen.findByText("API 연결됨");
 
     fireEvent.click(screen.getAllByRole("button", { name: "환전 플래너" })[0]);
@@ -299,17 +313,34 @@ describe("App", () => {
     [new ApiError("데모 인증 API 오류", 500, "SERVER"), "데모 인증 API 오류"],
     [
       new Error("network"),
-      "API 데모 계정을 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "체험 데이터를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     ],
-  ])("API 데이터 전환 오류를 화면에 표시한다", async (error, message) => {
+  ])("세션 발급 오류를 화면에 표시한다", async (error, message) => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     vi.mocked(startDemoSession).mockRejectedValue(error);
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: /대시보드 체험하기/ }));
-    fireEvent.click(screen.getByRole("button", { name: "목 데이터 사용 중" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
-    expect(screen.getByRole("button", { name: "목 데이터 사용 중" })).toBeEnabled();
+  });
+
+  it("세션 발급 실패 후 다시 시도하면 대시보드로 진입한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    vi.mocked(startDemoSession)
+      .mockRejectedValueOnce(new ApiError("데모 인증 API 오류", 500, "SERVER"))
+      .mockResolvedValueOnce({
+        accessToken: "demo",
+        refreshToken: "refresh",
+        expiresIn: 1800,
+        isDemo: true,
+      });
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: /대시보드 체험하기/ }));
+    await screen.findByRole("alert");
+
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+
+    expect(await screen.findByText("데모 계정")).toBeInTheDocument();
   });
 
   it("/route 직접 진입 시 랜딩을 거치지 않고 플래너 첫 화면을 렌더링한다", async () => {
@@ -329,6 +360,7 @@ describe("App", () => {
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     // 투어 시작하기 (Step 0 -> Step 1: home)
     const startTourBtn = screen.getByRole("button", { name: /투어 시작하기/ });
@@ -347,7 +379,7 @@ describe("App", () => {
     });
   });
 
-  it("랜딩 페이지에서 로그인 버튼 클릭 시 AuthPage 로그인 탭으로 이동하고 홈으로 돌아갈 수 있다", () => {
+  it("랜딩 페이지에서 로그인 버튼 클릭 시 AuthPage 로그인 탭으로 이동하고 홈으로 돌아갈 수 있다", async () => {
     render(<App />);
 
     const loginBtn = screen.getByRole("button", { name: "로그인" });
@@ -416,7 +448,7 @@ describe("App", () => {
     expect(window.location.pathname).toBe("/");
   });
 
-  it("인증된 사용자가 초기 설정 URL을 다시 열면 입력 화면을 복원한다", () => {
+  it("인증된 사용자가 초기 설정 URL을 다시 열면 입력 화면을 복원한다", async () => {
     vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
     window.history.replaceState(null, "", "/initial-setup");
 
@@ -462,7 +494,7 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", { name: "DIVURVE" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "목 데이터 사용 중" })).toBeInTheDocument();
+    expect(screen.getByText("데모 계정")).toBeInTheDocument();
     expect(window.location.pathname).toBe("/");
   });
 
@@ -491,13 +523,14 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
   });
 
-  it("마이페이지에서 로그아웃 버튼 클릭 시 랜딩 페이지로 복귀한다", () => {
+  it("마이페이지에서 로그아웃 버튼 클릭 시 랜딩 페이지로 복귀한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     // 대시보드 진입
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     // 마이페이지로 이동
     const mypageBtn = screen.getAllByRole("button", { name: /마이페이지/ })[0];
@@ -512,13 +545,14 @@ describe("App", () => {
     expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
   });
 
-  it("마이페이지에서 가이드 투어 다시보기 클릭 시 온보딩 투어가 다시 시작된다", () => {
+  it("마이페이지에서 가이드 투어 다시보기 클릭 시 온보딩 투어가 다시 시작된다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     // 대시보드 진입
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
+    await screen.findByRole("heading", { name: "DIVURVE" });
 
     // 마이페이지 이동
     const mypageBtn = screen.getAllByRole("button", { name: /마이페이지/ })[0];
