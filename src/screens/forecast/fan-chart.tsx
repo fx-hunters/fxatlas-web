@@ -14,12 +14,144 @@ interface FanChartProps {
   readonly currency: string;
 }
 
+export interface FanChartTooltipProps {
+  readonly active?: boolean;
+  readonly payload?: readonly {
+    readonly name?: string;
+    readonly value?: unknown;
+    readonly color?: string;
+    readonly dataKey?: string;
+  }[];
+  readonly label?: string | number;
+  readonly currency?: string;
+}
+
 export function formatYTick(v: number | string, idx: number): string {
   return idx === 0 ? "" : Number(v).toLocaleString();
 }
 
 export function formatTooltipValue(value: unknown): [string] {
   return [typeof value === "number" ? `₩${value.toLocaleString()}` : String(value)];
+}
+
+const ITEM_NAME_MAP: Record<string, string> = {
+  price: "실제 환율",
+  projected: "투영 시나리오",
+  range80_upper: "80% 상한",
+  range80_lower: "80% 하한",
+  range50_upper: "50% 상한",
+  range50_lower: "50% 하한",
+};
+
+export function FanChartTooltip({
+  active,
+  payload,
+  label,
+  currency = "USD",
+}: FanChartTooltipProps) {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  // 실제 환율 및 투영 시나리오, 80%/50% 범위 데이터 필터링
+  const validItems = payload.filter((item) => item.value !== undefined && item.value !== null);
+
+  return (
+    <div
+      style={{
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-md)",
+        padding: "0.75rem 1rem",
+        boxShadow: "var(--shadow-lg)",
+        minWidth: "180px",
+        fontSize: "0.8125rem",
+        lineHeight: 1.4,
+      }}
+    >
+      {/* 툴팁 상단 헤더: 날짜 & 통화 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid var(--border-subtle)",
+          paddingBottom: "0.375rem",
+          marginBottom: "0.5rem",
+        }}
+      >
+        <span style={{ fontWeight: 700, color: "var(--text)" }}>{label}</span>
+        <span
+          style={{
+            fontSize: "0.6875rem",
+            fontWeight: 700,
+            padding: "0.125rem 0.375rem",
+            borderRadius: "var(--radius-sm)",
+            backgroundColor: "var(--primary-subtle)",
+            color: "var(--primary)",
+            border: "1px solid var(--primary-border)",
+          }}
+        >
+          {currency}/KRW
+        </span>
+      </div>
+
+      {/* 툴팁 본문: 항목 목록 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+        {validItems.map((item, idx) => {
+          const key = item.dataKey || "";
+          const isMain = key === "price" || key === "projected";
+          const displayName = (key && ITEM_NAME_MAP[key]) || item.name || key || "항목";
+          const formattedVal =
+            typeof item.value === "number" ? `₩${item.value.toLocaleString()}` : String(item.value);
+
+          return (
+            <div
+              key={`${key}-${idx}`}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                <span
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    backgroundColor: isMain ? "var(--primary)" : "var(--text-muted)",
+                    display: "inline-block",
+                  }}
+                />
+                <span
+                  style={{
+                    color: isMain ? "var(--text)" : "var(--text-muted)",
+                    fontWeight: isMain ? 600 : 500,
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  {displayName}
+                </span>
+              </div>
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: isMain ? "var(--text)" : "var(--text-muted)",
+                  fontVariantNumeric: "tabular-nums",
+                  fontSize: isMain ? "0.875rem" : "0.75rem",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {formattedVal}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function FanChart({ data, currency }: FanChartProps) {
@@ -73,14 +205,8 @@ export function FanChart({ data, currency }: FanChartProps) {
             tickFormatter={formatYTick}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--surface)",
-              borderColor: "var(--border)",
-              color: "var(--text)",
-              borderRadius: "8px",
-              fontSize: "12px",
-            }}
-            formatter={formatTooltipValue}
+            cursor={{ stroke: "var(--text-muted)", strokeWidth: 1, strokeDasharray: "3 3" }}
+            content={<FanChartTooltip currency={currency} />}
           />
           <Area
             type="monotone"
