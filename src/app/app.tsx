@@ -239,7 +239,7 @@ export function App({ ensureSession }: AppProps = {}) {
               <RouteScreen mode={isDemoAccount ? "demo" : "api"} onNavigate={navigate} />
             )}
             {activeTab === "assets" && (
-              <XRayScreen isDemo={isDemoAccount} onNavigate={navigate} />
+              <XRayScreen onNavigate={navigate} />
             )}
             {activeTab === "range" && (
               <ForecastScreen onNavigate={navigate} />
