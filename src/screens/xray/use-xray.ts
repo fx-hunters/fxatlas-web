@@ -16,7 +16,7 @@ export const DEMO_XRAY_DATA: XRayDashboardData = {
     dateLabel: "매월 25일",
     amountUsd: 1200,
   },
-  fxSensitivity1PctKrw: 640000,
+  fxSensitivity1pctKrw: 640000,
   pnl: {
     costBasisKrw: 58000000,
     stockReturnKrw: 4200000,

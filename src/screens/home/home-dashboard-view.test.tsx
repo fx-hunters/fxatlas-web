@@ -17,7 +17,7 @@ describe("HomeDashboardView", () => {
       fxKrw: 64000000,
       krwAmount: 36000000,
       dayOverDayDiffPctPoints: 0.2,
-      sensitivity1PctKrw: 14200,
+      sensitivity1pctKrw: 14200,
       breakdown: { usd: 75, jpy: 15, eur: 10 },
     },
     attentionAlert: {

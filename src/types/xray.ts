@@ -51,7 +51,7 @@ export interface XRayDashboardData {
     readonly dateLabel: string;
     readonly amountUsd: number;
   };
-  readonly fxSensitivity1PctKrw: number;
+  readonly fxSensitivity1pctKrw: number;
   readonly pnl: PnLDecompositionData;
   readonly scenarios: readonly StressScenarioItem[];
   readonly concentrationPct: number;

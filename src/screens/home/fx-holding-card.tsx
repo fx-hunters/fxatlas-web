@@ -67,7 +67,7 @@ export function FxHoldingCard({ data, onNavigateToAssets }: FxHoldingCardProps) 
               </strong>
             </span>
             <span style={{ color: "var(--primary)" }}>
-              1% 변동시 ±₩{data.sensitivity1PctKrw.toLocaleString()}
+              1% 변동시 ±₩{data.sensitivity1pctKrw.toLocaleString()}
             </span>
           </div>
 

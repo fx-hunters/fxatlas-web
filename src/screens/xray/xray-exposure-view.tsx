@@ -277,7 +277,7 @@ export function XRayExposureView({
           >
             <span style={{ color: "var(--text-muted)" }}>1% 상승 시</span>
             <span style={{ color: "var(--normal)", fontWeight: 700 }}>
-              +₩ {data.fxSensitivity1PctKrw.toLocaleString()}
+              +₩ {data.fxSensitivity1pctKrw.toLocaleString()}
             </span>
           </div>
         </div>
