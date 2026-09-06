@@ -1,10 +1,6 @@
 import { useState } from "react";
-import type { NavTabId } from "../types/navigation";
-import { useTheme } from "../hooks/use-theme";
-import { LandingPage } from "../LandingPage";
-import { OnboardingTour } from "../OnboardingTour";
-import { Sidebar } from "../components/layout/sidebar";
 import { Header } from "../components/layout/header";
+import { Sidebar } from "../components/layout/sidebar";
 import { MobileNav } from "../components/layout/mobile-nav";
 import { Footer } from "../components/layout/footer";
 import { HomeScreen } from "../screens/home/home-screen";
@@ -13,6 +9,11 @@ import { XRayScreen } from "../screens/xray/xray-screen";
 import { ForecastScreen } from "../screens/forecast/forecast-screen";
 import { MyPageScreen } from "../screens/mypage/mypage-screen";
 import { ConnectivityCheckPanel } from "../screens/connectivity/connectivity-check-panel";
+import { LandingPage } from "../LandingPage";
+import { OnboardingTour } from "../OnboardingTour";
+import { AuthPage, type AuthMode } from "../AuthPage";
+import { useTheme } from "../hooks/use-theme";
+import type { NavTabId } from "../types/navigation";
 
 const TAB_LABELS: Record<NavTabId, string> = {
   home: "홈",
@@ -25,6 +26,8 @@ const TAB_LABELS: Record<NavTabId, string> = {
 
 export function App() {
   const [showLanding, setShowLanding] = useState<boolean>(true);
+  const [showAuth, setShowAuth] = useState<boolean>(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showTour, setShowTour] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<NavTabId>("home");
   const [isDemo, setIsDemo] = useState<boolean>(true);
@@ -32,8 +35,26 @@ export function App() {
 
   const activeTabTitle = TAB_LABELS[activeTab];
 
+  const goToLogin = () => {
+    setShowLanding(false);
+    setAuthMode("login");
+    setShowAuth(true);
+  };
+
+  const goToSignup = () => {
+    setShowLanding(false);
+    setAuthMode("signup");
+    setShowAuth(true);
+  };
+
+  const handleBackToLanding = () => {
+    setShowAuth(false);
+    setShowLanding(true);
+  };
+
   const handleEnterDashboard = () => {
     setShowLanding(false);
+    setShowAuth(false);
     try {
       const seen = localStorage.getItem("divurve_tour_done");
       if (!seen) {
@@ -67,8 +88,20 @@ export function App() {
     return (
       <LandingPage
         onEnter={handleEnterDashboard}
+        onLogin={goToLogin}
+        onSignup={goToSignup}
         isDark={isDark}
         setIsDark={handleSetIsDark}
+      />
+    );
+  }
+
+  if (showAuth) {
+    return (
+      <AuthPage
+        initialMode={authMode}
+        onSuccess={handleEnterDashboard}
+        onBack={handleBackToLanding}
       />
     );
   }

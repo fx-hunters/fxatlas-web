@@ -25,9 +25,26 @@ describe("LandingPage", () => {
   });
 
   it("대시보드 시작하기 버튼 및 로고 클릭 시 onEnter가 호출된다", () => {
+    const onLoginMock = vi.fn();
+    const onSignupMock = vi.fn();
+
     render(
-      <LandingPage onEnter={onEnterMock} isDark={true} setIsDark={setIsDarkMock} />
+      <LandingPage
+        onEnter={onEnterMock}
+        onLogin={onLoginMock}
+        onSignup={onSignupMock}
+        isDark={true}
+        setIsDark={setIsDarkMock}
+      />
     );
+
+    const loginBtn = screen.getByRole("button", { name: "로그인" });
+    fireEvent.click(loginBtn);
+    expect(onLoginMock).toHaveBeenCalledTimes(1);
+
+    const signupBtn = screen.getByRole("button", { name: /무료 시작/ });
+    fireEvent.click(signupBtn);
+    expect(onSignupMock).toHaveBeenCalledTimes(1);
 
     const startBtns = screen.getAllByRole("button", { name: /대시보드/ });
     fireEvent.click(startBtns[0]);
@@ -104,7 +121,7 @@ describe("LandingPage", () => {
     fireEvent.mouseEnter(bottomCtaBtn);
     fireEvent.mouseLeave(bottomCtaBtn);
 
-    const headerCtaBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const headerCtaBtn = screen.getByRole("button", { name: /무료 시작/ });
     fireEvent.mouseEnter(headerCtaBtn);
     fireEvent.mouseLeave(headerCtaBtn);
 

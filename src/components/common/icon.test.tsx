@@ -26,6 +26,10 @@ describe("Icon", () => {
     "edit",
     "trash",
     "check",
+    "eye",
+    "eyeOff",
+    "x",
+    "alertCircle",
   ];
 
   it.each(iconNames)("%s 아이콘이 렌더링된다", (name) => {

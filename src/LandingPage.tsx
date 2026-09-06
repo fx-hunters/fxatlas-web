@@ -15,6 +15,8 @@ export interface LandingPageProps {
   readonly onEnter: () => void;
   readonly isDark: boolean;
   readonly setIsDark: (v: boolean) => void;
+  readonly onLogin?: () => void;
+  readonly onSignup?: () => void;
 }
 
 export function formatLandingTooltipValue(v: unknown): [string] {
@@ -194,8 +196,11 @@ const STATS = [
   { label: "실시간 업데이트 지연", value: "< 0.1s", sub: "초저지연 데이터 파이프라인" },
 ];
 
-export function LandingPage({ onEnter, isDark, setIsDark }: LandingPageProps) {
+export function LandingPage({ onEnter, isDark, setIsDark, onLogin, onSignup }: LandingPageProps) {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+
+  const handleLoginClick = onLogin ?? onEnter;
+  const handleSignupClick = onSignup ?? onEnter;
 
   // 섹션별 useInView 설정
   const etymologySection = useInView(0.2);
@@ -340,8 +345,8 @@ export function LandingPage({ onEnter, isDark, setIsDark }: LandingPageProps) {
             </a>
           </nav>
 
-          {/* 우측 컨트롤 바 (테마 토글 & 대시보드 CTA) */}
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          {/* 우측 컨트롤 바 (테마 토글 & 로그인 & 무료 시작 CTA) */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <button
               type="button"
               onClick={() => setIsDark(!isDark)}
@@ -363,7 +368,26 @@ export function LandingPage({ onEnter, isDark, setIsDark }: LandingPageProps) {
 
             <button
               type="button"
-              onClick={onEnter}
+              onClick={handleLoginClick}
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: "var(--radius-full)",
+                backgroundColor: "transparent",
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+                fontFamily: "var(--font-sans)",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              로그인
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSignupClick}
               style={{
                 padding: "0.5rem 1.25rem",
                 borderRadius: "var(--radius-full)",
@@ -377,6 +401,7 @@ export function LandingPage({ onEnter, isDark, setIsDark }: LandingPageProps) {
                 alignItems: "center",
                 gap: "0.375rem",
                 transition: "all 0.15s ease",
+                cursor: "pointer",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.opacity = "0.9";
@@ -387,7 +412,7 @@ export function LandingPage({ onEnter, isDark, setIsDark }: LandingPageProps) {
                 e.currentTarget.style.transform = "none";
               }}
             >
-              <span>대시보드 시작하기</span>
+              <span>무료 시작</span>
               <Icon name="arrowRight" size={14} />
             </button>
           </div>

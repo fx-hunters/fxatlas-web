@@ -8,15 +8,16 @@ vi.mock("../api/connectivity", () => ({
   createConnectivityCheck: vi.fn(),
 }));
 
+beforeEach(() => {
+  localStorage.clear();
+  vi.mocked(fetchConnectivityChecks).mockResolvedValue([]);
+});
+
 afterEach(() => {
   vi.mocked(fetchConnectivityChecks).mockClear();
 });
 
 describe("App", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
   it("초기에 랜딩 페이지를 렌더링하고, 대시보드 시작하기 클릭 시 온보딩 투어가 표시된다", async () => {
     render(<App />);
     expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
@@ -26,7 +27,7 @@ describe("App", () => {
     fireEvent.click(landingThemeBtn);
     fireEvent.click(landingThemeBtn);
 
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     // 온보딩 웰컴 모달 표시 확인
@@ -52,7 +53,7 @@ describe("App", () => {
     localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
 
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     expect(screen.queryByRole("dialog", { name: "온보딩 웰컴" })).not.toBeInTheDocument();
@@ -68,7 +69,7 @@ describe("App", () => {
     });
 
     render(<App />);
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
@@ -87,7 +88,7 @@ describe("App", () => {
     render(<App />);
 
     // 랜딩 페이지 -> 대시보드 진입
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     // 환전 플래너 탭으로 이동
@@ -123,7 +124,7 @@ describe("App", () => {
   it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", () => {
     localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     const avatarBtn = screen.getByRole("button", { name: "마이페이지 이동" });
@@ -134,7 +135,7 @@ describe("App", () => {
   it("데모 모드 토글 및 테마 토글이 정상 동작한다", () => {
     localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     const demoToggle = screen.getByRole("button", { name: /데모 데이터 켜짐/ });
@@ -151,7 +152,7 @@ describe("App", () => {
   it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", () => {
     localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     const mobileNav = screen.getByRole("navigation", { name: "모바일 하단 내비게이션" });
@@ -164,7 +165,7 @@ describe("App", () => {
 
   it("온보딩 투어 진행 중 다음 단계 이동 시 해당 탭으로 화면이 자동 전환된다", async () => {
     render(<App />);
-    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
     // 투어 시작하기 (Step 0 -> Step 1: home)
@@ -182,5 +183,40 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "환율 범위", level: 2 })).toBeInTheDocument();
     });
+  });
+
+  it("랜딩 페이지에서 로그인 버튼 클릭 시 AuthPage 로그인 탭으로 이동하고 홈으로 돌아갈 수 있다", () => {
+    render(<App />);
+
+    const loginBtn = screen.getByRole("button", { name: "로그인" });
+    fireEvent.click(loginBtn);
+
+    // AuthPage 로그인 폼 노출 확인
+    expect(screen.getByLabelText("이메일")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "로그인" })).toBeInTheDocument();
+
+    // 홈으로 돌아가기 클릭
+    const backBtn = screen.getAllByRole("button", { name: /홈/ })[0];
+    fireEvent.click(backBtn);
+
+    expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
+  });
+
+  it("랜딩 페이지에서 무료 시작 클릭 시 AuthPage 회원가입 탭으로 이동하고 인증 완료 시 대시보드로 이동한다", () => {
+    localStorage.setItem("divurve_tour_done", "1");
+    render(<App />);
+
+    const signupBtn = screen.getByRole("button", { name: /무료 시작/ });
+    fireEvent.click(signupBtn);
+
+    // AuthPage 회원가입 폼 노출 확인
+    expect(screen.getByLabelText("이름")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "가입하기" })).toBeInTheDocument();
+
+    // 소셜 로그인 클릭으로 인증 완료 트리거
+    const googleBtn = screen.getByRole("button", { name: "구글로 시작하기" });
+    fireEvent.click(googleBtn);
+
+    expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
   });
 });
