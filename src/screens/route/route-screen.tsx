@@ -11,30 +11,32 @@ import "./route-screen.css";
 import { PlannerApiScreen } from "./planner-api-screen";
 import type { PlannerApiDependencies } from "./use-planner-api";
 
+/** 데모 fixture 화면과 Swagger API 화면 중 무엇을 렌더할지 정한다. */
+export type RouteScreenMode = "demo" | "api";
+
 interface RouteScreenProps {
-  readonly isDemo?: boolean;
+  readonly mode?: RouteScreenMode;
   readonly onNavigate?: (tab: NavTabId) => void;
   readonly loadPlan?: RoutePlanLoader;
   readonly apiDependencies?: PlannerApiDependencies;
 }
 
 export function RouteScreen({
-  isDemo = true,
+  mode = "demo",
   loadPlan = loadRoutePlan,
   apiDependencies,
 }: RouteScreenProps) {
-  if (!isDemo && loadPlan === loadRoutePlan) {
+  if (mode === "api") {
     return <PlannerApiScreen dependencies={apiDependencies} />;
   }
 
-  return <RouteDemoScreen isDemo={isDemo} loadPlan={loadPlan} />;
+  return <RouteDemoScreen loadPlan={loadPlan} />;
 }
 
 function RouteDemoScreen({
-  isDemo = true,
   loadPlan = loadRoutePlan,
-}: Pick<RouteScreenProps, "isDemo" | "loadPlan">) {
-  const { state, reload } = useRoutePlan(isDemo, loadPlan);
+}: Pick<RouteScreenProps, "loadPlan">) {
+  const { state, reload } = useRoutePlan(loadPlan);
   const interaction = usePlannerInteraction();
 
   if (state.status === "success") {

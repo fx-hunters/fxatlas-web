@@ -15,15 +15,16 @@ import { MyPageScreen } from "../screens/mypage/mypage-screen";
 import { RouteScreen } from "../screens/route/route-screen";
 import { XRayScreen } from "../screens/xray/xray-screen";
 import { InitialSetupScreen } from "../screens/initial-setup/initial-setup-screen";
+import { ApiStateView } from "../components/common/api-state-view";
 import { NAV_ITEMS } from "../types/navigation";
 import type { AuthSuccessResult } from "../types/auth";
-import { login, logout, signup, startDemoSession } from "../api/auth";
-import { ApiError } from "../api/client";
+import { login, logout, signup } from "../api/auth";
 import { readApiSession } from "../api/session";
 import {
   INITIAL_SETUP_PATH,
   resolvePostAuthDestination,
 } from "./post-auth-routing";
+import { useSessionBootstrap, type SessionEnsurer } from "./use-session-bootstrap";
 
 export const TOUR_STORAGE_KEY = "divurve_tour_done";
 export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,7 +43,12 @@ export function shouldShowTour(
   return now - timestamp >= TOUR_INACTIVITY_THRESHOLD_MS;
 }
 
-export function App() {
+interface AppProps {
+  /** 테스트에서 세션 확보 경로를 주입하기 위한 통로. */
+  readonly ensureSession?: SessionEnsurer;
+}
+
+export function App({ ensureSession }: AppProps = {}) {
   const { activeTab, navigate } = useTabNavigation();
   const [showLanding, setShowLanding] = useState<boolean>(
     () => window.location.pathname === "/",
@@ -55,10 +61,13 @@ export function App() {
       window.location.pathname === INITIAL_SETUP_PATH &&
       readApiSession()?.isDemo === false,
   );
-  const [isDemo, setIsDemo] = useState<boolean>(() => readApiSession() === null);
-  const [isApiSwitching, setIsApiSwitching] = useState(false);
-  const [apiSwitchError, setApiSwitchError] = useState<string | null>(null);
   const { isDark, toggleTheme, setTheme } = useTheme("dark");
+
+  const isDashboardVisible = !showLanding && !showAuth && !showInitialSetup;
+  const { state: sessionState, retry: retrySession } = useSessionBootstrap(
+    isDashboardVisible,
+    ensureSession,
+  );
 
   const currentTabItem = NAV_ITEMS.find((item) => item.id === activeTab);
   const activeTabTitle = currentTabItem!.label;
@@ -84,7 +93,6 @@ export function App() {
 
   const handleLogout = () => {
     logout();
-    setIsDemo(true);
     navigate("home");
     setShowInitialSetup(false);
     setShowLanding(true);
@@ -107,7 +115,6 @@ export function App() {
 
   const handleAuthenticated = (result: AuthSuccessResult | void) => {
     const destination = resolvePostAuthDestination(result);
-    setIsDemo(result?.isDemo === true);
 
     if (destination === "initialSetup") {
       setShowLanding(false);
@@ -127,28 +134,6 @@ export function App() {
   const handleInitialSetupComplete = () => {
     navigate("home");
     handleEnterDashboard();
-  };
-
-  const handleToggleDataSource = async () => {
-    setApiSwitchError(null);
-    if (!isDemo) {
-      setIsDemo(true);
-      return;
-    }
-
-    setIsApiSwitching(true);
-    try {
-      await startDemoSession();
-      setIsDemo(false);
-    } catch (error) {
-      setApiSwitchError(
-        error instanceof ApiError
-          ? error.message
-          : "API 데모 계정을 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-      );
-    } finally {
-      setIsApiSwitching(false);
-    }
   };
 
   const handleTourComplete = () => {
@@ -200,14 +185,38 @@ export function App() {
     return <InitialSetupScreen onComplete={handleInitialSetupComplete} />;
   }
 
+  if (sessionState.status === "bootstrapping") {
+    return (
+      <ApiStateView
+        status="loading"
+        title="체험 데이터를 준비하고 있습니다"
+        message="서버에서 계정 세션을 확인하고 있습니다."
+      />
+    );
+  }
+
+  if (sessionState.status === "failed") {
+    return (
+      <ApiStateView
+        status="error"
+        title="체험 데이터를 준비하지 못했습니다"
+        message={sessionState.message}
+        onRetry={retrySession}
+      />
+    );
+  }
+
+  // 화면들은 아직 계정 종류로 데모 fixture와 API 화면을 가른다.
+  // 도메인별 통합(PR-C~G)이 끝나면 이 분기 자체가 사라진다.
+  const isDemoAccount = sessionState.accountKind === "demo";
+
   return (
     <div className="app-shell">
       <Sidebar
         activeTab={activeTab}
-        isDemo={isDemo}
+        accountKind={sessionState.accountKind}
         onSelectTab={navigate}
-        onToggleDemo={() => void handleToggleDataSource()}
-        isDemoSwitching={isApiSwitching}
+        onLogin={goToLogin}
       />
 
       <div className="app-main-layout">
@@ -219,41 +228,25 @@ export function App() {
         />
 
         <main className="app-scroll-content">
-          {apiSwitchError && (
-            <div
-              role="alert"
-              style={{
-                margin: "1rem auto 0",
-                maxWidth: "1200px",
-                padding: "0.75rem 1rem",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--danger-border)",
-                backgroundColor: "var(--danger-bg)",
-                color: "var(--danger)",
-              }}
-            >
-              {apiSwitchError}
-            </div>
-          )}
           <div
             key={activeTab}
             className="app-content-container page-enter-animation"
           >
             {activeTab === "home" && (
-              <HomeScreen isDemo={isDemo} onNavigate={navigate} />
+              <HomeScreen isDemo={isDemoAccount} onNavigate={navigate} />
             )}
             {activeTab === "planner" && (
-              <RouteScreen isDemo={isDemo} onNavigate={navigate} />
+              <RouteScreen mode={isDemoAccount ? "demo" : "api"} onNavigate={navigate} />
             )}
             {activeTab === "assets" && (
-              <XRayScreen isDemo={isDemo} onNavigate={navigate} />
+              <XRayScreen isDemo={isDemoAccount} onNavigate={navigate} />
             )}
             {activeTab === "range" && (
-              <ForecastScreen isDemo={isDemo} onNavigate={navigate} />
+              <ForecastScreen isDemo={isDemoAccount} onNavigate={navigate} />
             )}
             {activeTab === "mypage" && (
               <MyPageScreen
-                isDemo={isDemo}
+                isDemo={isDemoAccount}
                 isLoggedIn={true}
                 onNavigate={navigate}
                 onLogin={goToLogin}
@@ -265,7 +258,7 @@ export function App() {
           </div>
         </main>
 
-        <Footer isDemo={isDemo} />
+        <Footer accountKind={sessionState.accountKind} />
       </div>
 
       <MobileNav activeTab={activeTab} onSelectTab={navigate} />

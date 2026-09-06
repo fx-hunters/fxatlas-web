@@ -18,7 +18,7 @@ import {
 } from "./use-planner-interaction";
 
 async function getPlan(index = 0): Promise<PlannerPlan> {
-  const data = await loadRoutePlan(true);
+  const data = await loadRoutePlan();
   if (data === null) {
     throw new Error("데모 플래너 fixture가 필요합니다.");
   }

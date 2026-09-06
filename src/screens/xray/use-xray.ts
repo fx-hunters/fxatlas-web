@@ -88,7 +88,7 @@ export const DEMO_XRAY_DATA: XRayDashboardData = {
   ],
 };
 
-export function useXRay(isDemo: boolean = true) {
+export function useXRay() {
   const [activeTab, setActiveTab] = useState<XRayTabId>("exposure");
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>("2008");
   const [eurSimulationPct, setEurSimulationPctState] = useState<number>(10);
@@ -119,7 +119,6 @@ export function useXRay(isDemo: boolean = true) {
 
   return {
     data,
-    isDemo,
     activeTab,
     selectedScenarioId,
     activeScenario,

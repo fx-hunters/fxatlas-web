@@ -36,7 +36,6 @@ export function MyPageScreen({
 
   return (
     <MyPageDemoScreen
-      isDemo={isDemo}
       isLoggedIn={isLoggedIn}
       onNavigate={onNavigate}
       onLogin={onLogin}
@@ -47,7 +46,6 @@ export function MyPageScreen({
 }
 
 function MyPageDemoScreen({
-  isDemo = true,
   isLoggedIn = true,
   onNavigate,
   onLogin,
@@ -66,7 +64,7 @@ function MyPageDemoScreen({
     handleLogout,
     handleLogin,
     handleRediagnosis,
-  } = useMyPage(isDemo);
+  } = useMyPage();
 
   const handleNavigate = (tab: NavTabId) => {
     if (onNavigate) {

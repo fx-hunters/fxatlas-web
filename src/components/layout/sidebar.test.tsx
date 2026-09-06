@@ -5,9 +5,8 @@ import { Sidebar } from "./sidebar";
 describe("Sidebar", () => {
   const defaultProps = {
     activeTab: "home" as const,
-    isDemo: true,
+    accountKind: "demo" as const,
     onSelectTab: vi.fn(),
-    onToggleDemo: vi.fn(),
   };
 
   it("서비스명 DIVURVE와 내비게이션 탭들을 렌더링한다", () => {
@@ -24,20 +23,31 @@ describe("Sidebar", () => {
     expect(defaultProps.onSelectTab).toHaveBeenCalledWith("planner");
   });
 
-  it("데모 토글 버튼 클릭 시 핸들러가 호출된다", () => {
+  it("데모 계정에는 계정 배지와 로그인 유도를 함께 표시한다", () => {
+    const onLogin = vi.fn();
+    render(<Sidebar {...defaultProps} onLogin={onLogin} />);
+
+    expect(screen.getByText("데모 계정")).toBeInTheDocument();
+    expect(screen.getByText("데모 계정 데이터")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "로그인하고 내 자산 보기" }));
+    expect(onLogin).toHaveBeenCalled();
+  });
+
+  it("로그인 콜백이 없으면 데모 계정에도 유도 버튼을 노출하지 않는다", () => {
     render(<Sidebar {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: /목 데이터 사용 중/ }));
-    expect(defaultProps.onToggleDemo).toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: "로그인하고 내 자산 보기" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("데모가 꺼진 상태의 제어 문구를 표시한다", () => {
-    render(<Sidebar {...defaultProps} isDemo={false} />);
+  it("회원 계정에는 로그인 유도 없이 계정 배지만 표시한다", () => {
+    render(<Sidebar {...defaultProps} accountKind="member" onLogin={vi.fn()} />);
 
-    expect(screen.getByRole("button", { name: "API 데이터 사용 중" })).toBeInTheDocument();
-  });
-
-  it("API 연결 중에는 전환 버튼을 비활성화한다", () => {
-    render(<Sidebar {...defaultProps} isDemoSwitching={true} />);
-    expect(screen.getByRole("button", { name: "API 연결 중…" })).toBeDisabled();
+    expect(screen.getByText("내 계정")).toBeInTheDocument();
+    expect(screen.getByText("내 계정 데이터")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "로그인하고 내 자산 보기" }),
+    ).not.toBeInTheDocument();
   });
 });

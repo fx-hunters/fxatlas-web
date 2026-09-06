@@ -39,7 +39,7 @@ function XrayDemoScreen({ onNavigate }: Pick<XRayScreenProps, "onNavigate">) {
     setSelectedScenarioId,
     setEurSimulationPct,
     openAssetModal,
-  } = useXRay(true);
+  } = useXRay();
 
   const handleNavigateToPlanner = () => {
     if (onNavigate) {

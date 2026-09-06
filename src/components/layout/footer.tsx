@@ -1,8 +1,10 @@
+import type { AccountKind } from "../../app/session-state";
+
 interface FooterProps {
-  readonly isDemo?: boolean;
+  readonly accountKind?: AccountKind;
 }
 
-export function Footer({ isDemo = true }: FooterProps) {
+export function Footer({ accountKind = "demo" }: FooterProps) {
   return (
     <footer
       className="app-footer"
@@ -18,7 +20,7 @@ export function Footer({ isDemo = true }: FooterProps) {
       }}
     >
       이 정보는 투자 권유가 아니며 실제 거래 전 별도 확인이 필요합니다. | 데이터 출처:{" "}
-      {isDemo ? "예시 데이터" : "연결된 API 응답"}
+      {accountKind === "demo" ? "데모 계정 데이터" : "내 계정 데이터"}
     </footer>
   );
 }

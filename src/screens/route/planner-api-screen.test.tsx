@@ -138,7 +138,7 @@ describe("PlannerApiScreen", () => {
   it("상위 Route 화면의 API 모드 분기를 사용한다", async () => {
     render(
       <RouteScreen
-        isDemo={false}
+        mode="api"
         apiDependencies={makeDependencies({
           load: vi.fn().mockResolvedValue({ items: [] }),
         })}

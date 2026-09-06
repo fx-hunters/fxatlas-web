@@ -26,7 +26,6 @@ function toRouteErrorMessage(error: unknown): string {
 }
 
 export function useRoutePlan(
-  isDemo: boolean = true,
   loader: RoutePlanLoader = loadRoutePlan,
 ): UseRoutePlanResult {
   const [state, setState] = useState<RoutePlanState>({ status: "loading" });
@@ -39,7 +38,7 @@ export function useRoutePlan(
 
     const load = async () => {
       try {
-        const data = await loader(isDemo);
+        const data = await loader();
         if (!isActive) {
           return;
         }
@@ -59,7 +58,7 @@ export function useRoutePlan(
     return () => {
       isActive = false;
     };
-  }, [isDemo, loader, reloadKey]);
+  }, [loader, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((currentKey) => currentKey + 1);

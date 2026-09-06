@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { loadRoutePlan } from "./route";
 
 describe("loadRoutePlan", () => {
-  it("데모 모드에서는 백엔드 형태 fixture를 camelCase 데이터로 반환한다", async () => {
-    const data = await loadRoutePlan(true);
+  it("백엔드 형태 fixture를 camelCase 데이터로 반환한다", async () => {
+    const data = await loadRoutePlan();
 
     expect(data).toMatchObject({
       dataNotice: {
@@ -27,9 +27,5 @@ describe("loadRoutePlan", () => {
     });
     expect(data).not.toHaveProperty("data_notice");
     expect(data?.plans[0]).not.toHaveProperty("intro_option");
-  });
-
-  it("실제 API 계약이 없는 비데모 모드에서는 빈 상태를 반환한다", async () => {
-    await expect(loadRoutePlan(false)).resolves.toBeNull();
   });
 });

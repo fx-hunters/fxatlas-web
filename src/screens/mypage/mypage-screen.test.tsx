@@ -14,7 +14,7 @@ describe("useMyPage hook", () => {
   });
 
   it("initializes with default demo profile and preferences", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     expect(result.current.profile.name).toBe("김데모");
     expect(result.current.profile.email).toBe("demo.kim@example.com");
     expect(result.current.profile.riskProfile).toBe("안정 추구형");
@@ -25,7 +25,7 @@ describe("useMyPage hook", () => {
   });
 
   it("updates bank preferential rate and clamps between 0 and 100", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
 
     act(() => {
       result.current.setBankPreferentialRate(90);
@@ -47,7 +47,7 @@ describe("useMyPage hook", () => {
   });
 
   it("toggles notification flags properly", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     expect(result.current.notifications.opportunityBucket).toBe(false);
 
     act(() => {
@@ -62,7 +62,7 @@ describe("useMyPage hook", () => {
   });
 
   it("handles password change toast and auto-clears after 3 seconds", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     expect(result.current.toastMessage).toBeNull();
 
     act(() => {
@@ -77,7 +77,7 @@ describe("useMyPage hook", () => {
   });
 
   it("handles re-diagnosis and cycles through risk profiles", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     expect(result.current.profile.riskProfile).toBe("안정 추구형");
 
     act(() => {
@@ -98,7 +98,7 @@ describe("useMyPage hook", () => {
   });
 
   it("handles consecutive toasts without premature clearance", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     act(() => {
       result.current.handlePasswordChange();
     });
@@ -126,7 +126,7 @@ describe("useMyPage hook", () => {
   });
 
   it("handles logout and login toast feedback", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     act(() => {
       result.current.handleLogout();
     });
@@ -139,7 +139,7 @@ describe("useMyPage hook", () => {
   });
 
   it("supports manual toast clear", () => {
-    const { result } = renderHook(() => useMyPage(true));
+    const { result } = renderHook(() => useMyPage());
     act(() => {
       result.current.handlePasswordChange();
     });
