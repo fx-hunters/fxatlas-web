@@ -71,6 +71,34 @@ describe("API key conversion", () => {
     expect(toSnakeCase("plain")).toBe("plain");
     expect(toSnakeCase(null)).toBeNull();
   });
+
+  // 백엔드는 숫자 경계에도 밑줄을 넣는다(`vol_30d`, `interval_80`).
+  // 밑줄 뒤 숫자는 대문자화되지 않으므로 밑줄만 사라진다 — 이 대응표를
+  // 고정해두지 않으면 타입 선언이 실제 응답 키와 어긋나도 드러나지 않는다.
+  it.each([
+    ["interval_80", "interval80"],
+    ["vol_30d", "vol30d"],
+    ["vol_percentile_5y", "volPercentile5y"],
+    ["per_1pct_krw", "per1pctKrw"],
+    ["coverage_80", "coverage80"],
+    ["sensitivity_1pct", "sensitivity1pct"],
+    ["sensitivity_1pct_krw", "sensitivity1pctKrw"],
+    ["worst_5_rate", "worst5Rate"],
+    ["p50_lo", "p50Lo"],
+    ["p80_hi", "p80Hi"],
+  ])("숫자 경계 응답 키 %s를 %s로 바꾼다", (snakeKey, camelKey) => {
+    expect(toCamelCase({ [snakeKey]: 1 })).toEqual({ [camelKey]: 1 });
+  });
+
+  // camelToSnakeKey는 대문자 앞에만 밑줄을 넣으므로 숫자 경계를 복원하지
+  // 못한다(`vol30d` → `vol30d`). 응답 전용 필드라 현재는 문제가 없지만,
+  // 요청 바디에 숫자 경계 필드가 생기면 백엔드가 읽지 못한다.
+  it("요청 변환은 숫자 경계 밑줄을 복원하지 못한다", () => {
+    expect(toSnakeCase({ vol30d: 1, interval80: 2 })).toEqual({
+      vol30d: 1,
+      interval80: 2,
+    });
+  });
 });
 
 describe("ApiError", () => {

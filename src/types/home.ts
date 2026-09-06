@@ -13,7 +13,7 @@ export interface FxHoldingData {
   readonly fxKrw: number;
   readonly krwAmount: number;
   readonly dayOverDayDiffPctPoints: number;
-  readonly sensitivity1PctKrw: number;
+  readonly sensitivity1pctKrw: number;
   readonly breakdown: {
     readonly usd: number;
     readonly jpy: number;
