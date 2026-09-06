@@ -4,19 +4,17 @@ import { Icon } from "../common/icon";
 interface SidebarProps {
   readonly activeTab: NavTabId;
   readonly isDemo: boolean;
-  readonly isDark: boolean;
+  readonly isDark?: boolean;
   readonly onSelectTab: (tab: NavTabId) => void;
   readonly onToggleDemo: () => void;
-  readonly onToggleTheme: () => void;
+  readonly onToggleTheme?: () => void;
 }
 
 export function Sidebar({
   activeTab,
   isDemo,
-  isDark,
   onSelectTab,
   onToggleDemo,
-  onToggleTheme,
 }: SidebarProps) {
   return (
     <aside
@@ -117,7 +115,7 @@ export function Sidebar({
         })}
       </nav>
 
-      {/* 하단 유틸리티 (데모 토글, 테마 전환, 기준일) */}
+      {/* 하단 유틸리티 (데모 토글, 기준일) */}
       <div
         style={{
           padding: "1rem",
@@ -146,28 +144,6 @@ export function Sidebar({
         >
           <Icon name={isDemo ? "checkCircle" : "database"} size={14} />
           <span>{isDemo ? "데모 데이터 켜짐" : "빈 상태 보기"}</span>
-        </button>
-
-        <button
-          type="button"
-          data-tour="tour-theme"
-          onClick={onToggleTheme}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            fontSize: "0.75rem",
-            fontWeight: 500,
-            color: "var(--text-muted)",
-            padding: "0.5rem 0.625rem",
-            borderRadius: "var(--radius-sm)",
-            backgroundColor: "var(--surface-subtle)",
-            border: "1px solid var(--border)",
-            transition: "all 0.15s",
-          }}
-        >
-          <Icon name={isDark ? "sun" : "moon"} size={14} />
-          <span>{isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}</span>
         </button>
 
         <div

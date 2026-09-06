@@ -56,11 +56,13 @@ export function GoalDetailView({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: "1rem",
           borderBottom: "1px solid var(--border)",
           paddingBottom: "1rem",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={onBack}
@@ -161,7 +163,7 @@ export function GoalDetailView({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
           gap: "2rem",
           height: "100%",
         }}
@@ -172,11 +174,12 @@ export function GoalDetailView({
             backgroundColor: "var(--surface)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)",
-            padding: "2rem",
+            padding: "clamp(1.25rem, 3vw, 2rem)",
             display: "flex",
             flexDirection: "column",
             gap: "2rem",
             boxShadow: "var(--shadow-sm)",
+            minWidth: 0,
           }}
         >
           <h3
@@ -394,10 +397,11 @@ export function GoalDetailView({
             backgroundColor: "var(--surface)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)",
-            padding: "2rem",
+            padding: "clamp(1.25rem, 3vw, 2rem)",
             display: "flex",
             flexDirection: "column",
             boxShadow: "var(--shadow-sm)",
+            minWidth: 0,
           }}
         >
           <h3
@@ -445,7 +449,7 @@ export function GoalDetailView({
             </div>
             <div
               style={{
-                fontSize: "3.5rem",
+                fontSize: "clamp(2rem, 6vw, 3.5rem)",
                 fontWeight: 800,
                 letterSpacing: "-0.04em",
                 color: "var(--text)",
@@ -474,7 +478,7 @@ export function GoalDetailView({
           </div>
 
           {/* 2열 스탯 요약 박스 */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: "1rem", marginBottom: "2rem" }}>
             <div
               style={{
                 backgroundColor: "var(--bg)",

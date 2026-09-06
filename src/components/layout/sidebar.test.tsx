@@ -26,12 +26,9 @@ describe("Sidebar", () => {
     expect(defaultProps.onSelectTab).toHaveBeenCalledWith("planner");
   });
 
-  it("데모 토글 및 테마 토글 버튼 클릭 시 핸들러가 호출된다", () => {
+  it("데모 토글 버튼 클릭 시 핸들러가 호출된다", () => {
     render(<Sidebar {...defaultProps} />);
     fireEvent.click(screen.getByRole("button", { name: /데모 데이터 켜짐/ }));
     expect(defaultProps.onToggleDemo).toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole("button", { name: /라이트 모드로 전환/ }));
-    expect(defaultProps.onToggleTheme).toHaveBeenCalled();
   });
 });

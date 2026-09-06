@@ -277,11 +277,17 @@ export function OnboardingTour({ onComplete, onNavigate }: OnboardingTourProps) 
   const winW = window.innerWidth;
   const winH = window.innerHeight;
 
-  const tipLeft = spot ? spot.left + spot.w + 18 : 100;
+  // 타겟이 화면 우측 1/3 영역에 있으면 툴팁을 타겟 왼쪽 또는 아래쪽에 배치
+  const isRightSide = spot ? spot.left > winW - TOOLTIP_W - 40 : false;
+  const tipLeft = spot
+    ? isRightSide
+      ? spot.left - TOOLTIP_W - 18
+      : spot.left + spot.w + 18
+    : 100;
   const tipTop = spot ? spot.top + spot.h / 2 : 100;
 
-  const clampedLeft = Math.min(tipLeft, winW - TOOLTIP_W - 12);
-  const clampedTop = Math.max(12, Math.min(tipTop - 80, winH - 220));
+  const clampedLeft = Math.max(12, Math.min(tipLeft, winW - TOOLTIP_W - 12));
+  const clampedTop = Math.max(12, Math.min(tipTop - 80, winH - 240));
 
   const progress = (step / (TOUR_STEPS.length - 1)) * 100;
 
@@ -351,18 +357,31 @@ export function OnboardingTour({ onComplete, onNavigate }: OnboardingTourProps) 
           transition: "transform 0.25s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease",
         }}
       >
-        {/* 왼쪽 화살표 */}
+        {/* 방향 화살표 */}
         <div
           style={{
             position: "absolute",
-            left: -7,
-            top: "50%",
-            marginTop: -7,
-            width: 0,
-            height: 0,
-            borderTop: "7px solid transparent",
-            borderBottom: "7px solid transparent",
-            borderRight: "7px solid var(--surface)",
+            ...(isRightSide
+              ? {
+                  right: -7,
+                  top: "50%",
+                  marginTop: -7,
+                  width: 0,
+                  height: 0,
+                  borderTop: "7px solid transparent",
+                  borderBottom: "7px solid transparent",
+                  borderLeft: "7px solid var(--surface)",
+                }
+              : {
+                  left: -7,
+                  top: "50%",
+                  marginTop: -7,
+                  width: 0,
+                  height: 0,
+                  borderTop: "7px solid transparent",
+                  borderBottom: "7px solid transparent",
+                  borderRight: "7px solid var(--surface)",
+                }),
           }}
         />
 

@@ -425,13 +425,14 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
     >
       {/* --- 좌측 패널 (lg 이상 전용, 브랜드 로고만 + 그리드 장식) --- */}
       <div
-        className="hidden lg:flex"
+        className="hidden-below-lg"
         style={{
           width: "440px",
           minWidth: "440px",
           backgroundColor: "var(--surface)",
           borderRight: "1px solid var(--border)",
           position: "relative",
+          display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "2.5rem 2rem",
@@ -552,8 +553,9 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
         <div style={{ maxWidth: "420px", width: "100%" }}>
           {/* 모바일 상단 로고 & 뒤로가기 */}
           <div
-            className="flex lg:hidden"
+            className="hidden-lg"
             style={{
+              display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               marginBottom: "2rem",

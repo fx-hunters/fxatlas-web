@@ -20,7 +20,7 @@ export function XRayFitnessView({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* 1행: 집중도 진단 & 쏠림 해결 가이드 네온 카드 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: "1.5rem" }}>
         {/* 집중도 진단 카드 */}
         <div
           style={{
@@ -45,7 +45,7 @@ export function XRayFitnessView({
           </h2>
           <div
             style={{
-              fontSize: "4.5rem",
+              fontSize: "clamp(3rem, 8vw, 4.5rem)",
               fontWeight: 800,
               color: "var(--danger)",
               marginBottom: "1rem",
@@ -144,7 +144,7 @@ export function XRayFitnessView({
       </div>
 
       {/* 2행: 분산효과 시뮬레이터 & 통화별 성격 비교 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: "1.5rem" }}>
         {/* 분산효과 시뮬레이터 카드 */}
         <div
           style={{

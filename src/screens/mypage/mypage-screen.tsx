@@ -104,7 +104,7 @@ export function MyPageScreen({
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
-          padding: '2rem',
+          padding: 'clamp(1.25rem, 3.5vw, 2rem)',
           borderRadius: 'var(--radius-2xl)',
           flexWrap: 'wrap',
         }}
@@ -265,7 +265,7 @@ export function MyPageScreen({
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
-          padding: '2rem',
+          padding: 'clamp(1.25rem, 3.5vw, 2rem)',
           borderRadius: 'var(--radius-2xl)',
         }}
       >
@@ -334,6 +334,8 @@ export function MyPageScreen({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -371,7 +373,7 @@ export function MyPageScreen({
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
-          padding: '2rem',
+          padding: 'clamp(1.25rem, 3.5vw, 2rem)',
           borderRadius: 'var(--radius-2xl)',
           display: 'flex',
           flexDirection: 'column',
@@ -540,7 +542,7 @@ export function MyPageScreen({
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
-          padding: '2rem',
+          padding: 'clamp(1.25rem, 3.5vw, 2rem)',
           borderRadius: 'var(--radius-2xl)',
         }}
       >

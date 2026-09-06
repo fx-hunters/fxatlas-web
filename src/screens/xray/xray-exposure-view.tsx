@@ -32,9 +32,9 @@ export function XRayExposureView({
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1.5rem" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: "1.5rem" }}>
       {/* 좌측 컬럼: 외화 비중, 통화별 노출, 예정 외화 지출 */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", minWidth: 0 }}>
         {/* 외화 비중 카드 */}
         <div
           style={{
@@ -57,11 +57,11 @@ export function XRayExposureView({
           >
             외화 비중
           </h2>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
             <div>
               <div
                 style={{
-                  fontSize: "3.5rem",
+                  fontSize: "clamp(2.5rem, 7vw, 3.5rem)",
                   fontWeight: 800,
                   letterSpacing: "-0.04em",
                   color: "var(--text)",
@@ -284,7 +284,7 @@ export function XRayExposureView({
       </div>
 
       {/* 우측 컬럼: 손익 분해 테이블, 종목 상세, 스트레스 시나리오 */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", minWidth: 0 }}>
         {/* 손익 분해 카드 */}
         <div
           style={{
@@ -514,7 +514,7 @@ export function XRayExposureView({
             스트레스 시나리오
           </h2>
 
-          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
             {data.scenarios.map((scenario) => {
               const isSelected = scenario.id === selectedScenarioId;
               return (
@@ -550,6 +550,8 @@ export function XRayExposureView({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexWrap: "wrap",
+              gap: "0.75rem",
             }}
           >
             <div>
@@ -573,7 +575,7 @@ export function XRayExposureView({
             </div>
             <div
               style={{
-                fontSize: "1.5rem",
+                fontSize: "clamp(1.25rem, 4vw, 1.5rem)",
                 fontWeight: 800,
                 color: "var(--danger)",
                 fontVariantNumeric: "tabular-nums",

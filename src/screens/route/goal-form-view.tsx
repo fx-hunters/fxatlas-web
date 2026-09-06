@@ -53,7 +53,7 @@ export function GoalFormView({
         backgroundColor: "var(--surface)",
         border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)",
-        padding: "2rem",
+        padding: "clamp(1.25rem, 3.5vw, 2rem)",
         boxShadow: "var(--shadow-lg)",
       }}
     >
@@ -109,7 +109,7 @@ export function GoalFormView({
               (목적 함수 결정)
             </span>
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "1rem" }}>
             <button
               type="button"
               onClick={() => setPurposeType("recurring")}
@@ -222,7 +222,7 @@ export function GoalFormView({
         </div>
 
         {/* 4. 통화 및 5. 목표 금액 */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: "1rem" }}>
           <div>
             <label
               htmlFor="goal-currency"

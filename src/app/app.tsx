@@ -137,10 +137,8 @@ export function App() {
       <Sidebar
         activeTab={activeTab}
         isDemo={isDemo}
-        isDark={isDark}
         onSelectTab={setActiveTab}
         onToggleDemo={() => setIsDemo((prev) => !prev)}
-        onToggleTheme={toggleTheme}
       />
 
       {/* 메인 뷰포트 레이아웃 */}

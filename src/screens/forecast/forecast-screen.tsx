@@ -106,15 +106,10 @@ export function ForecastScreen({ isDemo = true, onNavigate }: ForecastScreenProp
       </div>
 
       {/* 팬 차트 및 우측 요약 카드 그리드 */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "1.5rem",
-        }}
-      >
+      <div className="forecast-main-grid">
         {/* 좌측: 시뮬레이션 팬 차트 */}
         <div
+          className="forecast-chart-card"
           style={{
             backgroundColor: "var(--surface)",
             border: "1px solid var(--border)",
@@ -124,7 +119,6 @@ export function ForecastScreen({ isDemo = true, onNavigate }: ForecastScreenProp
             minHeight: "380px",
             display: "flex",
             flexDirection: "column",
-            gridColumn: "span 2",
           }}
         >
           <h2
@@ -291,7 +285,7 @@ export function ForecastScreen({ isDemo = true, onNavigate }: ForecastScreenProp
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
           gap: "1.5rem",
         }}
       >
@@ -341,7 +335,7 @@ export function ForecastScreen({ isDemo = true, onNavigate }: ForecastScreenProp
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <div
                       style={{
-                        width: `${driver.barWidthPx}px`,
+                        width: `min(${driver.barWidthPx}px, 100px)`,
                         height: "8px",
                         backgroundColor: barColor,
                         borderRadius: "var(--radius-full)",

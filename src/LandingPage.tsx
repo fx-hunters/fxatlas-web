@@ -320,27 +320,17 @@ export function LandingPage({ onEnter, isDark, setIsDark, onLogin, onSignup }: L
           </div>
 
           {/* 중앙 네비 메뉴 */}
-          <nav
-            style={{
-              display: "none",
-              gap: "2rem",
-              alignItems: "center",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              color: "var(--text-muted)",
-            }}
-            className="md:flex"
-          >
-            <a href="#features" style={{ transition: "color 0.15s ease" }} className="hover:text-primary">
+          <nav className="landing-nav">
+            <a href="#features" style={{ transition: "color 0.15s ease" }}>
               기능
             </a>
-            <a href="#etymology" style={{ transition: "color 0.15s ease" }} className="hover:text-primary">
+            <a href="#etymology" style={{ transition: "color 0.15s ease" }}>
               어원
             </a>
-            <a href="#how-it-works" style={{ transition: "color 0.15s ease" }} className="hover:text-primary">
+            <a href="#how-it-works" style={{ transition: "color 0.15s ease" }}>
               작동 방식
             </a>
-            <a href="#stats" style={{ transition: "color 0.15s ease" }} className="hover:text-primary">
+            <a href="#stats" style={{ transition: "color 0.15s ease" }}>
               성과 지표
             </a>
           </nav>
@@ -875,7 +865,7 @@ export function LandingPage({ onEnter, isDark, setIsDark, onLogin, onSignup }: L
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
             gap: "1.5rem",
           }}
         >
