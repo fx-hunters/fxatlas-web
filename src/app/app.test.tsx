@@ -13,7 +13,11 @@ afterEach(() => {
 });
 
 describe("App", () => {
-  it("초기에 랜딩 페이지를 렌더링하고, 대시보드 시작하기 클릭 시 대시보드로 진입한다", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("초기에 랜딩 페이지를 렌더링하고, 대시보드 시작하기 클릭 시 온보딩 투어가 표시된다", async () => {
     render(<App />);
     expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
 
@@ -25,11 +29,61 @@ describe("App", () => {
     const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
     fireEvent.click(startBtn);
 
+    // 온보딩 웰컴 모달 표시 확인
+    expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
+
+    // 투어 시작하기 클릭 -> onNavigate("home") 호출 및 STEP 1 렌더링
+    const startTourBtn = screen.getByRole("button", { name: /투어 시작하기/ });
+    fireEvent.click(startTourBtn);
+
+    // STEP 1 툴팁이 렌더링될 때까지 대기 후 건너뛰기(투어 종료) 클릭
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "투어 종료" })).toBeInTheDocument();
+    });
+    const skipBtn = screen.getByRole("button", { name: "투어 종료" });
+    fireEvent.click(skipBtn);
+
+    expect(localStorage.getItem("divurve_tour_done")).toBe("1");
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "오늘의 행동 (이번 주 확보액)" })).toBeInTheDocument();
   });
 
+  it("localStorage에 이미 투어 완료 기록이 있으면 투어를 띄우지 않고 즉시 대시보드로 진입한다", () => {
+    localStorage.setItem("divurve_tour_done", "1");
+    render(<App />);
+
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
+    expect(screen.queryByRole("dialog", { name: "온보딩 웰컴" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
+  });
+
+  it("localStorage 접근 에러가 발생해도 안전하게 투어를 표시하고 종료할 수 있다", () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("SecurityError");
+    });
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("SecurityError");
+    });
+
+    render(<App />);
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
+    expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
+
+    const skipBtn = screen.getByRole("button", { name: "건너뛰기" });
+    fireEvent.click(skipBtn);
+
+    expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
+
+    getItemSpy.mockRestore();
+    setItemSpy.mockRestore();
+  });
+
   it("사이드바 탭 클릭 시 해당 화면으로 전환된다", async () => {
+    localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
 
     // 랜딩 페이지 -> 대시보드 진입
@@ -67,6 +121,7 @@ describe("App", () => {
   });
 
   it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", () => {
+    localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
     fireEvent.click(startBtn);
@@ -77,6 +132,7 @@ describe("App", () => {
   });
 
   it("데모 모드 토글 및 테마 토글이 정상 동작한다", () => {
+    localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
     fireEvent.click(startBtn);
@@ -93,6 +149,7 @@ describe("App", () => {
   });
 
   it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", () => {
+    localStorage.setItem("divurve_tour_done", "1");
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
     fireEvent.click(startBtn);
@@ -103,5 +160,27 @@ describe("App", () => {
       fireEvent.click(mobilePlannerBtn);
       expect(screen.getByRole("heading", { name: "환전 플래너", level: 2 })).toBeInTheDocument();
     }
+  });
+
+  it("온보딩 투어 진행 중 다음 단계 이동 시 해당 탭으로 화면이 자동 전환된다", async () => {
+    render(<App />);
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
+    // 투어 시작하기 (Step 0 -> Step 1: home)
+    const startTourBtn = screen.getByRole("button", { name: /투어 시작하기/ });
+    fireEvent.click(startTourBtn);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "다음" })).toBeInTheDocument();
+    });
+
+    // Step 1 -> Step 2: range
+    const nextBtn = screen.getByRole("button", { name: "다음" });
+    fireEvent.click(nextBtn);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "환율 범위", level: 2 })).toBeInTheDocument();
+    });
   });
 });

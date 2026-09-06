@@ -87,6 +87,7 @@ export function Sidebar({
             <button
               key={item.id}
               type="button"
+              data-tour={`tour-${item.id}`}
               onClick={() => onSelectTab(item.id)}
               style={{
                 position: "relative",
@@ -149,6 +150,7 @@ export function Sidebar({
 
         <button
           type="button"
+          data-tour="tour-theme"
           onClick={onToggleTheme}
           style={{
             display: "flex",

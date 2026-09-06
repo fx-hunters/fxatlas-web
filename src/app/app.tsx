@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { NavTabId } from "../types/navigation";
 import { useTheme } from "../hooks/use-theme";
 import { LandingPage } from "../LandingPage";
+import { OnboardingTour } from "../OnboardingTour";
 import { Sidebar } from "../components/layout/sidebar";
 import { Header } from "../components/layout/header";
 import { MobileNav } from "../components/layout/mobile-nav";
@@ -24,6 +25,7 @@ const TAB_LABELS: Record<NavTabId, string> = {
 
 export function App() {
   const [showLanding, setShowLanding] = useState<boolean>(true);
+  const [showTour, setShowTour] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<NavTabId>("home");
   const [isDemo, setIsDemo] = useState<boolean>(true);
   const { isDark, toggleTheme, setTheme } = useTheme("dark");
@@ -32,10 +34,33 @@ export function App() {
 
   const handleEnterDashboard = () => {
     setShowLanding(false);
+    try {
+      const seen = localStorage.getItem("divurve_tour_done");
+      if (!seen) {
+        setShowTour(true);
+      }
+    } catch {
+      setShowTour(true);
+    }
+  };
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+    try {
+      localStorage.setItem("divurve_tour_done", "1");
+    } catch {
+      // localStorage disabled fallback
+    }
   };
 
   const handleSetIsDark = (dark: boolean) => {
     setTheme(dark ? "dark" : "light");
+  };
+
+  const handleNavigateTab = (tab: string) => {
+    if (tab in TAB_LABELS) {
+      setActiveTab(tab as NavTabId);
+    }
   };
 
   if (showLanding) {
@@ -95,6 +120,14 @@ export function App() {
 
       {/* 모바일 하단 내비게이션 바 */}
       <MobileNav activeTab={activeTab} onSelectTab={setActiveTab} />
+
+      {/* 온보딩 투어 가이드 */}
+      {showTour && (
+        <OnboardingTour
+          onComplete={handleTourComplete}
+          onNavigate={handleNavigateTab}
+        />
+      )}
     </div>
   );
 }
