@@ -33,14 +33,22 @@ describe("screen API modules", () => {
     expect(requestWithMeta).toHaveBeenCalledWith("/api/v1/home/summary");
   });
 
-  it("환율 범위 관련 공개 API 네 개를 한 번에 조회한다", async () => {
+  it("인증이 필요한 forecast와 공개 API 셋을 한 번에 조회한다", async () => {
     vi.mocked(request).mockImplementation(async (path) => ({ path }));
+    vi.mocked(requestWithMeta).mockImplementation(async (path) => ({
+      data: { path },
+      meta: { asOf: "2026-09-06T22:14:01Z" },
+    }));
     const result = await fetchForecastBundle("USD_KRW", 30);
-    expect(result.forecast).toEqual({ path: "/api/v1/forecast?pair_code=USD_KRW&horizon_days=30" });
+    expect(result.forecast).toEqual({
+      path: "/api/v1/forecast?pair_code=USD_KRW&horizon_days=30",
+    });
+    expect(result.asOf).toBe("2026-09-06T22:14:01Z");
     expect(result.factors).toEqual({ path: "/api/v1/forecast/factors?pair_code=USD_KRW" });
     expect(result.performance).toEqual({ path: "/api/v1/forecast/model-performance?pair_code=USD_KRW&horizon_days=30" });
     expect(result.events).toEqual({ path: "/api/v1/events" });
-    expect(request).toHaveBeenCalledTimes(4);
+    // forecast만 인증 요청이므로 공개 request는 셋뿐이다.
+    expect(request).toHaveBeenCalledTimes(3);
     expect(request).toHaveBeenCalledWith(expect.any(String), { requiresAuth: false });
   });
 
