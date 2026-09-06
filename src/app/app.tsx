@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { NavTabId } from "../types/navigation";
 import { useTheme } from "../hooks/use-theme";
+import { LandingPage } from "../LandingPage";
 import { Sidebar } from "../components/layout/sidebar";
 import { Header } from "../components/layout/header";
 import { MobileNav } from "../components/layout/mobile-nav";
@@ -22,11 +23,30 @@ const TAB_LABELS: Record<NavTabId, string> = {
 };
 
 export function App() {
+  const [showLanding, setShowLanding] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<NavTabId>("home");
   const [isDemo, setIsDemo] = useState<boolean>(true);
-  const { isDark, toggleTheme } = useTheme("dark");
+  const { isDark, toggleTheme, setTheme } = useTheme("dark");
 
   const activeTabTitle = TAB_LABELS[activeTab];
+
+  const handleEnterDashboard = () => {
+    setShowLanding(false);
+  };
+
+  const handleSetIsDark = (dark: boolean) => {
+    setTheme(dark ? "dark" : "light");
+  };
+
+  if (showLanding) {
+    return (
+      <LandingPage
+        onEnter={handleEnterDashboard}
+        isDark={isDark}
+        setIsDark={handleSetIsDark}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">

@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 /*
  * 디자인 토큰 (CLAUDE.md 6장 · 개발 컨벤션 7장).
  *
@@ -8,8 +12,9 @@
 
 :root {
   /* --- 폰트 및 기본 단위 --- */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-display: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* --- 레이아웃 & 간격 --- */
   --sidebar-width: 256px;
@@ -31,6 +36,7 @@
 
   --text: #121d28;
   --text-muted: #5c6e7e;
+  --muted: #5c6e7e;
 
   --primary: #00a670;
   --primary-content: #ffffff;
@@ -80,6 +86,7 @@
 
   --text: #e9eff4;
   --text-muted: #8b9daa;
+  --muted: #8b9daa;
 
   --primary: #00ffaa;
   --primary-content: #000000;
@@ -118,6 +125,7 @@
 
     --text: #e9eff4;
     --text-muted: #8b9daa;
+    --muted: #8b9daa;
 
     --primary: #00ffaa;
     --primary-content: #000000;

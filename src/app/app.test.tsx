@@ -13,14 +13,28 @@ afterEach(() => {
 });
 
 describe("App", () => {
-  it("서비스명 DIVURVE와 홈 대시보드를 초기 렌더링한다", () => {
+  it("초기에 랜딩 페이지를 렌더링하고, 대시보드 시작하기 클릭 시 대시보드로 진입한다", () => {
     render(<App />);
+    expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
+
+    // 랜딩 페이지에서 테마 토글 버튼 클릭 (다크 -> 라이트 -> 다크)
+    const landingThemeBtn = screen.getByRole("button", { name: "테마 전환" });
+    fireEvent.click(landingThemeBtn);
+    fireEvent.click(landingThemeBtn);
+
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "오늘의 행동 (이번 주 확보액)" })).toBeInTheDocument();
   });
 
   it("사이드바 탭 클릭 시 해당 화면으로 전환된다", async () => {
     render(<App />);
+
+    // 랜딩 페이지 -> 대시보드 진입
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
 
     // 환전 플래너 탭으로 이동
     const plannerBtns = screen.getAllByRole("button", { name: /환전 플래너/ });
@@ -54,6 +68,9 @@ describe("App", () => {
 
   it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", () => {
     render(<App />);
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
     const avatarBtn = screen.getByRole("button", { name: "마이페이지 이동" });
     fireEvent.click(avatarBtn);
     expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
@@ -61,6 +78,9 @@ describe("App", () => {
 
   it("데모 모드 토글 및 테마 토글이 정상 동작한다", () => {
     render(<App />);
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
     const demoToggle = screen.getByRole("button", { name: /데모 데이터 켜짐/ });
     expect(demoToggle).toBeInTheDocument();
 
@@ -74,6 +94,9 @@ describe("App", () => {
 
   it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", () => {
     render(<App />);
+    const startBtn = screen.getByRole("button", { name: /대시보드 시작하기/ });
+    fireEvent.click(startBtn);
+
     const mobileNav = screen.getByRole("navigation", { name: "모바일 하단 내비게이션" });
     const mobilePlannerBtn = mobileNav.querySelector("button:nth-child(2)");
     if (mobilePlannerBtn) {
