@@ -219,4 +219,25 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
   });
+
+  it("마이페이지에서 로그아웃 버튼 클릭 시 랜딩 페이지로 복귀한다", () => {
+    localStorage.setItem("divurve_tour_done", "1");
+    render(<App />);
+
+    // 대시보드 진입
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
+    fireEvent.click(startBtn);
+
+    // 마이페이지로 이동
+    const mypageBtn = screen.getAllByRole("button", { name: /마이페이지/ })[0];
+    fireEvent.click(mypageBtn);
+    expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
+
+    // 로그아웃 버튼 클릭
+    const logoutBtn = screen.getByRole("button", { name: "로그아웃" });
+    fireEvent.click(logoutBtn);
+
+    // 랜딩 페이지로 복귀 확인
+    expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
+  });
 });

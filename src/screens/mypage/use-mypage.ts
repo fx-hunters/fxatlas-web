@@ -61,6 +61,14 @@ export function useMyPage(isDemo = true) {
     showToast('비밀번호 변경 안내 메일이 발송되었습니다.');
   }, [showToast]);
 
+  const handleLogout = useCallback(() => {
+    showToast('로그아웃되었습니다.');
+  }, [showToast]);
+
+  const handleLogin = useCallback(() => {
+    showToast('로그인 페이지로 이동합니다.');
+  }, [showToast]);
+
   const handleRediagnosis = useCallback(() => {
     // Cycle to next risk profile or update date
     setProfile((prev) => {
@@ -93,6 +101,8 @@ export function useMyPage(isDemo = true) {
     setBankPreferentialRate: handleRateChange,
     toggleNotification,
     handlePasswordChange,
+    handleLogout,
+    handleLogin,
     handleRediagnosis,
     clearToast: () => setToastMessage(null),
   };

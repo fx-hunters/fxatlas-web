@@ -52,6 +52,11 @@ export function App() {
     setShowLanding(true);
   };
 
+  const handleLogout = () => {
+    setShowLanding(true);
+    setShowAuth(false);
+  };
+
   const handleEnterDashboard = () => {
     setShowLanding(false);
     setShowAuth(false);
@@ -142,7 +147,12 @@ export function App() {
               <ForecastScreen isDemo={isDemo} onNavigate={setActiveTab} />
             )}
             {activeTab === "mypage" && (
-              <MyPageScreen isDemo={isDemo} onNavigate={setActiveTab} />
+              <MyPageScreen
+                isDemo={isDemo}
+                onNavigate={setActiveTab}
+                onLogin={goToLogin}
+                onLogout={handleLogout}
+              />
             )}
             {activeTab === "connectivity" && <ConnectivityCheckPanel />}
           </div>

@@ -2,12 +2,21 @@ import { useMyPage, NOTIFICATION_OPTIONS } from './use-mypage';
 import { Icon } from '../../components/common/icon';
 import type { NavTabId } from '../../types/navigation';
 
-interface MyPageScreenProps {
+export interface MyPageScreenProps {
   readonly isDemo?: boolean;
+  readonly isLoggedIn?: boolean;
   readonly onNavigate?: (tab: NavTabId) => void;
+  readonly onLogin?: () => void;
+  readonly onLogout?: () => void;
 }
 
-export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
+export function MyPageScreen({
+  isDemo = true,
+  isLoggedIn = true,
+  onNavigate,
+  onLogin,
+  onLogout,
+}: MyPageScreenProps) {
   const {
     profile,
     bankPreferentialRate,
@@ -17,12 +26,30 @@ export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
     setBankPreferentialRate,
     toggleNotification,
     handlePasswordChange,
+    handleLogout,
+    handleLogin,
     handleRediagnosis,
   } = useMyPage(isDemo);
 
   const handleNavigate = (tab: NavTabId) => {
     if (onNavigate) {
       onNavigate(tab);
+    }
+  };
+
+  const handleLoginClick = () => {
+    if (onLogin) {
+      onLogin();
+    } else {
+      handleLogin();
+    }
+  };
+
+  const handleLogoutClick = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      handleLogout();
     }
   };
 
@@ -122,32 +149,112 @@ export function MyPageScreen({ isDemo = true, onNavigate }: MyPageScreenProps) {
           </p>
         </div>
 
-        {/* 비밀번호 변경 버튼 */}
-        <button
-          type="button"
-          onClick={handlePasswordChange}
+        {/* 액션 버튼 그룹 */}
+        <div
           style={{
             marginLeft: 'auto',
-            padding: '0.625rem 1.25rem',
-            backgroundColor: 'var(--bg)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-xl)',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            color: 'var(--text)',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)';
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            flexWrap: 'wrap',
           }}
         >
-          비밀번호 변경
-        </button>
+          {isLoggedIn ? (
+            <>
+              {/* 비밀번호 변경 버튼 */}
+              <button
+                type="button"
+                onClick={handlePasswordChange}
+                style={{
+                  padding: '0.625rem 1rem',
+                  backgroundColor: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-xl)',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: 'var(--shadow-sm)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                }}
+              >
+                <Icon name="edit" size={15} className="text-muted" />
+                <span>비밀번호 변경</span>
+              </button>
+
+              {/* 로그아웃 버튼 */}
+              <button
+                type="button"
+                onClick={handleLogoutClick}
+                style={{
+                  padding: '0.625rem 1rem',
+                  backgroundColor: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-xl)',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: 'var(--shadow-sm)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--danger)';
+                  e.currentTarget.style.color = 'var(--danger)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }}
+              >
+                <Icon name="logOut" size={15} />
+                <span>로그아웃</span>
+              </button>
+            </>
+          ) : (
+            /* 로그인 버튼 (비로그인 상태일 때) */
+            <button
+              type="button"
+              onClick={handleLoginClick}
+              style={{
+                padding: '0.625rem 1.25rem',
+                backgroundColor: 'var(--primary)',
+                color: 'var(--primary-content)',
+                border: 'none',
+                borderRadius: 'var(--radius-xl)',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.9';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+              }}
+            >
+              <Icon name="logIn" size={15} />
+              <span>로그인</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 2. 의사결정 프로필 (투자성향) */}

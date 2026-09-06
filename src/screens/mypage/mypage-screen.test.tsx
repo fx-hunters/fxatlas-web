@@ -125,6 +125,19 @@ describe("useMyPage hook", () => {
     expect(result.current.toastMessage).toBeNull();
   });
 
+  it("handles logout and login toast feedback", () => {
+    const { result } = renderHook(() => useMyPage(true));
+    act(() => {
+      result.current.handleLogout();
+    });
+    expect(result.current.toastMessage).toBe("로그아웃되었습니다.");
+
+    act(() => {
+      result.current.handleLogin();
+    });
+    expect(result.current.toastMessage).toBe("로그인 페이지로 이동합니다.");
+  });
+
   it("supports manual toast clear", () => {
     const { result } = renderHook(() => useMyPage(true));
     act(() => {
@@ -220,11 +233,51 @@ describe("MyPageScreen Component", () => {
     expect(() => fireEvent.click(plannerShortcutBtn)).not.toThrow();
   });
 
+  it("handles login click when not logged in (isLoggedIn=false) with callback or fallback toast", () => {
+    const handleLogin = vi.fn();
+    const { unmount } = render(<MyPageScreen isLoggedIn={false} onLogin={handleLogin} />);
+
+    const loginBtn = screen.getByRole("button", { name: "로그인" });
+    expect(screen.queryByRole("button", { name: "로그아웃" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "비밀번호 변경" })).not.toBeInTheDocument();
+
+    fireEvent.click(loginBtn);
+    expect(handleLogin).toHaveBeenCalledTimes(1);
+
+    unmount();
+    render(<MyPageScreen isLoggedIn={false} />);
+    const loginBtnFallback = screen.getByRole("button", { name: "로그인" });
+    fireEvent.click(loginBtnFallback);
+    expect(screen.getByText("로그인 페이지로 이동합니다.")).toBeInTheDocument();
+  });
+
+  it("handles logout click when logged in (isLoggedIn=true) with callback or fallback toast", () => {
+    const handleLogout = vi.fn();
+    const { unmount } = render(<MyPageScreen isLoggedIn={true} onLogout={handleLogout} />);
+
+    const logoutBtn = screen.getByRole("button", { name: "로그아웃" });
+    expect(screen.getByRole("button", { name: "비밀번호 변경" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "로그인" })).not.toBeInTheDocument();
+
+    fireEvent.click(logoutBtn);
+    expect(handleLogout).toHaveBeenCalledTimes(1);
+
+    unmount();
+    render(<MyPageScreen isLoggedIn={true} />);
+    const logoutBtnFallback = screen.getByRole("button", { name: "로그아웃" });
+    fireEvent.click(logoutBtnFallback);
+    expect(screen.getByText("로그아웃되었습니다.")).toBeInTheDocument();
+  });
+
   it("handles mouseEnter and mouseLeave interactions on buttons and labels", () => {
-    render(<MyPageScreen />);
+    const { unmount } = render(<MyPageScreen isLoggedIn={true} />);
     const pwdBtn = screen.getByRole("button", { name: "비밀번호 변경" });
     fireEvent.mouseEnter(pwdBtn);
     fireEvent.mouseLeave(pwdBtn);
+
+    const logoutBtn = screen.getByRole("button", { name: "로그아웃" });
+    fireEvent.mouseEnter(logoutBtn);
+    fireEvent.mouseLeave(logoutBtn);
 
     const rediagnosisBtn = screen.getByRole("button", { name: "재진단" });
     fireEvent.mouseEnter(rediagnosisBtn);
@@ -244,5 +297,13 @@ describe("MyPageScreen Component", () => {
       fireEvent.mouseEnter(labelElem);
       fireEvent.mouseLeave(labelElem);
     }
+
+    unmount();
+
+    // Test mouseEnter/Leave on login button when logged out
+    render(<MyPageScreen isLoggedIn={false} />);
+    const loginBtn = screen.getByRole("button", { name: "로그인" });
+    fireEvent.mouseEnter(loginBtn);
+    fireEvent.mouseLeave(loginBtn);
   });
 });
