@@ -1,67 +1,190 @@
-export type GoalPurposeType = "recurring" | "single";
 export type CurrencyCode = "USD" | "JPY" | "EUR";
 
-export interface GoalSummary {
+export type RouteTone = "default" | "primary" | "normal" | "warn" | "danger";
+export type PlannerKind = "recurring" | "deadline";
+export type PlannerScenarioId = "expectedRange" | "rapidRise" | "decline" | "missedRound" | "reducedBudget";
+export type PlannerCheckpointStatus = "complete" | "next" | "upcoming" | "destination";
+export type PlannerStage = "intro" | "entering" | "journey" | "scenarioPreview" | "confirmChange" | "recorded";
+
+export interface RouteDataNotice {
+  readonly source: "mock";
+  readonly sourceLabel: string;
+  readonly asOfLabel: string;
+  readonly notice: string;
+}
+
+export interface PlannerIntroContent {
+  readonly eyebrow: string;
+  readonly title: string;
+  readonly description: string;
+  readonly newPlanLabel: string;
+  readonly demoActionLabel: string;
+  readonly creationNotice: string;
+}
+
+export interface PlannerGoalOption {
   readonly id: string;
+  readonly kind: PlannerKind;
   readonly name: string;
-  readonly category: string;
-  readonly currency: CurrencyCode;
-  readonly isRecurring: boolean;
-  readonly targetAmount: number;
-  readonly deadlineDday: number;
-  readonly fundedRatio: number;
-  readonly targetDate?: string;
-  readonly monthlyKrw?: number;
-  readonly safeRatioPct?: number;
-  readonly splitRounds?: number;
-  readonly holdingFxAmount?: number;
-  readonly riskProfile?: string;
-  readonly volatilityPercentile?: string;
+  readonly purposeLabel: string;
+  readonly summary: string;
+  readonly currencyCode: CurrencyCode;
+  readonly primaryValueLabel: string;
+  readonly secondaryValueLabel: string;
+  readonly diagnosisNote: string;
 }
 
-export interface GoalFormData {
-  readonly purposeType: GoalPurposeType;
-  readonly category: string;
+export interface RouteFlowStep {
+  readonly id: string;
+  readonly label: string;
+  readonly description: string;
+  readonly tone: RouteTone;
+}
+
+export interface RouteGoalSummary {
   readonly name: string;
-  readonly currency: CurrencyCode;
-  readonly targetAmount: number;
-  readonly targetDate: string;
+  readonly purposeLabel: string;
+  readonly currencyCode: CurrencyCode;
+  readonly targetAmountLabel: string;
+  readonly targetDateLabel: string;
+  readonly securedAmountLabel: string;
+  readonly remainingPeriodLabel: string;
+  readonly progressPercent: number;
+  readonly progressLabel: string;
+  readonly diagnosisLabel: string;
+  readonly primaryMetricLabel: string;
+  readonly primaryMetricValue: string;
 }
 
-export interface ScheduleRound {
-  readonly roundNumber: number;
-  readonly dDayOffset: number;
-  readonly bucketType: "안전" | "기회";
-  readonly krwAmount: number;
-  readonly isCompleted?: boolean;
+export interface RoutePlanSummary {
+  readonly title: string;
+  readonly statusLabel: string;
+  readonly statusTone: RouteTone;
+  readonly description: string;
+  readonly nextRoundLabel: string;
+  readonly roundCountLabel: string;
+  readonly cadenceLabel: string;
+  readonly destinationLabel: string;
 }
 
-export interface StrategyComparison {
-  readonly strategyKey: "A" | "B" | "C";
-  readonly strategyName: string;
-  readonly avgEntryPriceKrw: number;
-  readonly worst5PctPriceKrw: number;
-  readonly successRatePct: number;
-  readonly isCurrentPlan?: boolean;
+export interface RouteBucketItem {
+  readonly id: string;
+  readonly kind: "safe" | "opportunity";
+  readonly label: string;
+  readonly ratioLabel: string;
+  readonly amountLabel: string;
+  readonly description: string;
+  readonly widthPercent: number;
 }
 
-export interface GoalSimulationResult {
-  readonly oneSigmaVolatilityKrw: number;
-  readonly successRatePct: number;
-  readonly worst5PctEntryPriceKrw: number;
-  readonly avgEntryPriceKrw: number;
-  readonly roundsSchedule: readonly ScheduleRound[];
-  readonly strategies: readonly StrategyComparison[];
+export interface RouteBucketSummary {
+  readonly totalLabel: string;
+  readonly notice: string;
+  readonly items: readonly RouteBucketItem[];
 }
 
-export interface GoalDetailPlan {
-  readonly goal: GoalSummary;
-  readonly availableKrwMonthly: number;
-  readonly safeRatioPct: number;
-  readonly splitRounds: number;
-  readonly holdingFxAmount: number;
-  readonly riskProfile: string;
-  readonly volatilityPercentile: string;
-  readonly simulation: GoalSimulationResult;
+export interface RouteRoundItem {
+  readonly id: string;
+  readonly sequenceLabel: string;
+  readonly scheduledDateLabel: string;
+  readonly bucketLabel: string;
+  readonly amountLabel: string;
+  readonly statusLabel: string;
+  readonly statusTone: RouteTone;
 }
 
+export interface RouteRoundSummary {
+  readonly totalLabel: string;
+  readonly notice: string;
+  readonly items: readonly RouteRoundItem[];
+}
+
+export interface PlannerCurve {
+  readonly id: string;
+  readonly path: string;
+  readonly accessibleLabel: string;
+}
+
+export interface PlannerCheckpointData {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly label: string;
+  readonly title: string;
+  readonly detail: string;
+  readonly amountLabel: string;
+  readonly status: PlannerCheckpointStatus;
+  readonly statusLabel: string;
+  readonly appearDelayMs: number;
+}
+
+export interface PlannerAction {
+  readonly eyebrow: string;
+  readonly title: string;
+  readonly dueLabel: string;
+  readonly amountLabel: string;
+  readonly description: string;
+  readonly recordLabel: string;
+  readonly skipLabel: string;
+  readonly scenarioLabel: string;
+  readonly reasonLabel: string;
+}
+
+export interface PlannerScenario {
+  readonly id: PlannerScenarioId;
+  readonly label: string;
+  readonly summary: string;
+  readonly changeReason: string;
+  readonly nextAction: string;
+  readonly tone: RouteTone;
+  readonly curve: PlannerCurve;
+  readonly checkpoints: readonly PlannerCheckpointData[];
+  readonly changedCheckpointIds: readonly string[];
+  readonly applyLabel: string;
+}
+
+export interface PlannerRecordedState {
+  readonly announcement: string;
+  readonly currentStatusLabel: string;
+  readonly nextCheckpointId: string;
+  readonly nextCheckpointStatusLabel: string;
+  readonly action: PlannerAction;
+}
+
+export interface PlannerReasonProfile {
+  readonly id: string;
+  readonly label: string;
+  readonly levelLabel: string;
+  readonly paragraphs: readonly string[];
+}
+
+export interface PlannerExplanation {
+  readonly title: string;
+  readonly summary: string;
+  readonly aiNotice: string;
+  readonly profiles: readonly [PlannerReasonProfile, ...PlannerReasonProfile[]];
+  readonly tbdTitle: string;
+  readonly tbdItems: readonly string[];
+}
+
+export interface PlannerPlan {
+  readonly id: string;
+  readonly kind: PlannerKind;
+  readonly introOption: PlannerGoalOption;
+  readonly flowSteps: readonly RouteFlowStep[];
+  readonly goal: RouteGoalSummary;
+  readonly plan: RoutePlanSummary;
+  readonly buckets: RouteBucketSummary;
+  readonly rounds: RouteRoundSummary;
+  readonly baseScenarioId: PlannerScenarioId;
+  readonly scenarios: readonly [PlannerScenario, ...PlannerScenario[]];
+  readonly action: PlannerAction;
+  readonly recordedState: PlannerRecordedState;
+  readonly explanation: PlannerExplanation;
+}
+
+export interface RoutePlanData {
+  readonly dataNotice: RouteDataNotice;
+  readonly intro: PlannerIntroContent;
+  readonly plans: readonly [PlannerPlan, ...PlannerPlan[]];
+}

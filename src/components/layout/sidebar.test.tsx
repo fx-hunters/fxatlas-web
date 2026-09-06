@@ -6,10 +6,8 @@ describe("Sidebar", () => {
   const defaultProps = {
     activeTab: "home" as const,
     isDemo: true,
-    isDark: true,
     onSelectTab: vi.fn(),
     onToggleDemo: vi.fn(),
-    onToggleTheme: vi.fn(),
   };
 
   it("서비스명 DIVURVE와 내비게이션 탭들을 렌더링한다", () => {
@@ -30,5 +28,11 @@ describe("Sidebar", () => {
     render(<Sidebar {...defaultProps} />);
     fireEvent.click(screen.getByRole("button", { name: /데모 데이터 켜짐/ }));
     expect(defaultProps.onToggleDemo).toHaveBeenCalled();
+  });
+
+  it("데모가 꺼진 상태의 제어 문구를 표시한다", () => {
+    render(<Sidebar {...defaultProps} isDemo={false} />);
+
+    expect(screen.getByRole("button", { name: "빈 상태 보기" })).toBeInTheDocument();
   });
 });

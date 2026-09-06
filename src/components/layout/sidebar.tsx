@@ -4,10 +4,8 @@ import { Icon } from "../common/icon";
 interface SidebarProps {
   readonly activeTab: NavTabId;
   readonly isDemo: boolean;
-  readonly isDark?: boolean;
   readonly onSelectTab: (tab: NavTabId) => void;
   readonly onToggleDemo: () => void;
-  readonly onToggleTheme?: () => void;
 }
 
 export function Sidebar({

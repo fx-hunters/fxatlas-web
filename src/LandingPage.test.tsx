@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LandingPage, useInView, Spark, formatLandingTooltipValue } from "./LandingPage";
 
@@ -130,7 +130,6 @@ describe("LandingPage", () => {
     fireEvent.mouseLeave(exploreLink);
   });
 });
-
 describe("Spark and Tooltip formatter", () => {
   it("스파크라인 차트를 정상 렌더링한다", () => {
     const { container } = render(<Spark data={[{ v: 10 }, { v: 20 }]} color="#00ffaa" />);
@@ -168,11 +167,11 @@ describe("useInView", () => {
     const { rerender } = render(<TestComponent />);
     expect(screen.getByText("NOT_IN_VIEW")).toBeInTheDocument();
 
-    callback([{ isIntersecting: false }]);
+    act(() => callback([{ isIntersecting: false }]));
     rerender(<TestComponent />);
     expect(screen.getByText("NOT_IN_VIEW")).toBeInTheDocument();
 
-    callback([{ isIntersecting: true }]);
+    act(() => callback([{ isIntersecting: true }]));
     rerender(<TestComponent />);
     expect(screen.getByText("IN_VIEW")).toBeInTheDocument();
   });
@@ -187,4 +186,3 @@ describe("useInView", () => {
     expect(screen.getByText("NOT_IN_VIEW")).toBeInTheDocument();
   });
 });
-

@@ -1,39 +1,32 @@
 import { useState } from "react";
-import { Header } from "../components/layout/header";
-import { Sidebar } from "../components/layout/sidebar";
-import { MobileNav } from "../components/layout/mobile-nav";
-import { Footer } from "../components/layout/footer";
-import { HomeScreen } from "../screens/home/home-screen";
-import { RouteScreen } from "../screens/route/route-screen";
-import { XRayScreen } from "../screens/xray/xray-screen";
-import { ForecastScreen } from "../screens/forecast/forecast-screen";
-import { MyPageScreen } from "../screens/mypage/mypage-screen";
-import { ConnectivityCheckPanel } from "../screens/connectivity/connectivity-check-panel";
+import { AuthPage, type AuthMode } from "../AuthPage";
 import { LandingPage } from "../LandingPage";
 import { OnboardingTour } from "../OnboardingTour";
-import { AuthPage, type AuthMode } from "../AuthPage";
+import { Footer } from "../components/layout/footer";
+import { Header } from "../components/layout/header";
+import { MobileNav } from "../components/layout/mobile-nav";
+import { Sidebar } from "../components/layout/sidebar";
+import { useTabNavigation } from "../hooks/use-tab-navigation";
 import { useTheme } from "../hooks/use-theme";
-import type { NavTabId } from "../types/navigation";
-
-const TAB_LABELS: Record<NavTabId, string> = {
-  home: "홈",
-  planner: "환전 플래너",
-  assets: "내 자산",
-  range: "환율 범위",
-  mypage: "마이페이지",
-  connectivity: "연결 확인",
-};
+import { ConnectivityCheckPanel } from "../screens/connectivity/connectivity-check-panel";
+import { ForecastScreen } from "../screens/forecast/forecast-screen";
+import { HomeScreen } from "../screens/home/home-screen";
+import { MyPageScreen } from "../screens/mypage/mypage-screen";
+import { RouteScreen } from "../screens/route/route-screen";
+import { XRayScreen } from "../screens/xray/xray-screen";
+import { NAV_ITEMS } from "../types/navigation";
 
 export const TOUR_STORAGE_KEY = "divurve_tour_done";
-export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7일 이상 경과 시 오랜만에 접속한 유저로 판단하여 재노출
+export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function shouldShowTour(storedValue: string | null, now: number = Date.now()): boolean {
+export function shouldShowTour(
+  storedValue: string | null,
+  now: number = Date.now(),
+): boolean {
   if (!storedValue) {
-    // 최초 접속 / 최초 로그인
     return true;
   }
   const timestamp = Number(storedValue);
-  // 이전 버전 "1" 등 단순 플래그이거나 비정상 타임스탬프인 경우, 또는 7일 이상 미접속 경과 시
   if (Number.isNaN(timestamp) || timestamp <= 1) {
     return true;
   }
@@ -41,15 +34,18 @@ export function shouldShowTour(storedValue: string | null, now: number = Date.no
 }
 
 export function App() {
-  const [showLanding, setShowLanding] = useState<boolean>(true);
+  const { activeTab, navigate } = useTabNavigation();
+  const [showLanding, setShowLanding] = useState<boolean>(
+    () => window.location.pathname === "/",
+  );
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showTour, setShowTour] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<NavTabId>("home");
   const [isDemo, setIsDemo] = useState<boolean>(true);
   const { isDark, toggleTheme, setTheme } = useTheme("dark");
 
-  const activeTabTitle = TAB_LABELS[activeTab];
+  const currentTabItem = NAV_ITEMS.find((item) => item.id === activeTab);
+  const activeTabTitle = currentTabItem!.label;
 
   const goToLogin = () => {
     setShowLanding(false);
@@ -64,11 +60,13 @@ export function App() {
   };
 
   const handleBackToLanding = () => {
+    navigate("home");
     setShowAuth(false);
     setShowLanding(true);
   };
 
   const handleLogout = () => {
+    navigate("home");
     setShowLanding(true);
     setShowAuth(false);
   };
@@ -99,14 +97,8 @@ export function App() {
     setShowTour(true);
   };
 
-  const handleSetIsDark = (dark: boolean) => {
-    setTheme(dark ? "dark" : "light");
-  };
-
-  const handleNavigateTab = (tab: string) => {
-    if (tab in TAB_LABELS) {
-      setActiveTab(tab as NavTabId);
-    }
+  const handleSetIsDark = (isNextDark: boolean) => {
+    setTheme(isNextDark ? "dark" : "light");
   };
 
   if (showLanding) {
@@ -133,41 +125,42 @@ export function App() {
 
   return (
     <div className="app-shell">
-      {/* 데스크톱 사이드바 */}
       <Sidebar
         activeTab={activeTab}
         isDemo={isDemo}
-        onSelectTab={setActiveTab}
-        onToggleDemo={() => setIsDemo((prev) => !prev)}
+        onSelectTab={navigate}
+        onToggleDemo={() => setIsDemo((previous) => !previous)}
       />
 
-      {/* 메인 뷰포트 레이아웃 */}
       <div className="app-main-layout">
         <Header
           activeTabTitle={activeTabTitle}
           isDark={isDark}
           onToggleTheme={toggleTheme}
-          onNavigateToMypage={() => setActiveTab("mypage")}
+          onNavigateToMypage={() => navigate("mypage")}
         />
 
         <main className="app-scroll-content">
-          <div key={activeTab} className="app-content-container page-enter-animation">
+          <div
+            key={activeTab}
+            className="app-content-container page-enter-animation"
+          >
             {activeTab === "home" && (
-              <HomeScreen isDemo={isDemo} onNavigate={setActiveTab} />
+              <HomeScreen isDemo={isDemo} onNavigate={navigate} />
             )}
             {activeTab === "planner" && (
-              <RouteScreen isDemo={isDemo} onNavigate={setActiveTab} />
+              <RouteScreen isDemo={isDemo} onNavigate={navigate} />
             )}
             {activeTab === "assets" && (
-              <XRayScreen isDemo={isDemo} onNavigate={setActiveTab} />
+              <XRayScreen isDemo={isDemo} onNavigate={navigate} />
             )}
             {activeTab === "range" && (
-              <ForecastScreen isDemo={isDemo} onNavigate={setActiveTab} />
+              <ForecastScreen isDemo={isDemo} onNavigate={navigate} />
             )}
             {activeTab === "mypage" && (
               <MyPageScreen
                 isDemo={isDemo}
-                onNavigate={setActiveTab}
+                onNavigate={navigate}
                 onLogin={goToLogin}
                 onLogout={handleLogout}
                 onStartTour={handleStartTour}
@@ -180,14 +173,12 @@ export function App() {
         <Footer />
       </div>
 
-      {/* 모바일 하단 내비게이션 바 */}
-      <MobileNav activeTab={activeTab} onSelectTab={setActiveTab} />
+      <MobileNav activeTab={activeTab} onSelectTab={navigate} />
 
-      {/* 온보딩 투어 가이드 */}
       {showTour && (
         <OnboardingTour
           onComplete={handleTourComplete}
-          onNavigate={handleNavigateTab}
+          onNavigate={navigate}
         />
       )}
     </div>

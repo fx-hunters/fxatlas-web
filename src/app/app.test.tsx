@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { fetchConnectivityChecks } from "../api/connectivity";
 import { App, shouldShowTour, TOUR_STORAGE_KEY } from "./app";
 
@@ -10,6 +10,7 @@ vi.mock("../api/connectivity", () => ({
 
 beforeEach(() => {
   localStorage.clear();
+  window.history.replaceState(null, "", "/");
   vi.mocked(fetchConnectivityChecks).mockResolvedValue([]);
 });
 
@@ -126,7 +127,13 @@ describe("App", () => {
     // 환전 플래너 탭으로 이동
     const plannerBtns = screen.getAllByRole("button", { name: /환전 플래너/ });
     fireEvent.click(plannerBtns[0]);
-    expect(screen.getByRole("heading", { name: "환전 플래너", level: 2 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", {
+        name: "어떤 외화 목표를 준비하고 있나요?",
+        level: 2,
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/route");
 
     // 내 자산 탭으로 이동
     const assetsBtns = screen.getAllByRole("button", { name: /내 자산/ });
@@ -181,7 +188,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /다크 모드로 변경/ })).toBeInTheDocument();
   });
 
-  it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", () => {
+  it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
@@ -191,8 +198,41 @@ describe("App", () => {
     const mobilePlannerBtn = mobileNav.querySelector("button:nth-child(2)");
     if (mobilePlannerBtn) {
       fireEvent.click(mobilePlannerBtn);
-      expect(screen.getByRole("heading", { name: "환전 플래너", level: 2 })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("heading", {
+          name: "어떤 외화 목표를 준비하고 있나요?",
+          level: 2,
+        }),
+      ).toBeInTheDocument();
+      expect(window.location.pathname).toBe("/route");
     }
+  });
+
+  it("사이드바에서 데모 데이터를 끄면 홈 빈 상태를 표시한다", () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    render(<App />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /대시보드 체험하기/ }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "데모 데이터 켜짐" }));
+
+    expect(
+      screen.getByRole("heading", { name: "외화 목표가 없습니다" }),
+    ).toBeInTheDocument();
+  });
+
+  it("/route 직접 진입 시 랜딩을 거치지 않고 플래너 첫 화면을 렌더링한다", async () => {
+    window.history.replaceState(null, "", "/route");
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "어떤 외화 목표를 준비하고 있나요?",
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/route");
   });
 
   it("온보딩 투어 진행 중 다음 단계 이동 시 해당 탭으로 화면이 자동 전환된다", async () => {

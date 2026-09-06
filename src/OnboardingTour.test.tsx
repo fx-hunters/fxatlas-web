@@ -190,4 +190,40 @@ describe("OnboardingTour", () => {
       window.dispatchEvent(new Event("resize"));
     });
   });
+
+  it("화면 오른쪽의 타겟에는 툴팁과 화살표를 왼쪽 방향으로 배치한다", () => {
+    Element.prototype.getBoundingClientRect = vi.fn(() => ({
+      left: 800,
+      top: 100,
+      right: 900,
+      bottom: 140,
+      width: 100,
+      height: 40,
+      x: 800,
+      y: 100,
+      toJSON: () => {},
+    }));
+
+    render(
+      <OnboardingTour
+        onComplete={onCompleteMock}
+        onNavigate={onNavigateMock}
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    fireEvent.click(screen.getByRole("button", { name: /투어 시작하기/ }));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    expect(
+      screen.getByRole("dialog", { name: "온보딩 단계 1" }),
+    ).toHaveStyle({ left: "476px" });
+  });
 });

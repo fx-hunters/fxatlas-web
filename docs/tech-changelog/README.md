@@ -31,3 +31,6 @@
 | [0001](./0001-introduce-technical-change-log.md) | 기술적 변경 로그 체계 도입 | 2026-09-05 |
 | [0002](./0002-clean-code-architecture-principles.md) | 클린 코드·아키텍처 설계 원칙 섹션 추가 | 2026-09-05 |
 | [0003](./0003-rename-service-to-divurve.md) | 서비스명 FxAtlas → Divurve 리브랜딩 | 2026-09-05 |
+| [0004](./0004-connectivity-check-test-page.md) | 프론트·DB 연동 확인용 테스트 페이지 | 2026-09-05 |
+| [0005](./0005-responsive-layout-and-home-screen.md) | 반응형 공통 레이아웃 및 홈 대시보드 | 2026-09-05 |
+| [0006](./0006-route-planner-screen.md) | Curve 중심 사용자용 플래너 프로토타입 | 2026-09-06 |

@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { Icon } from "./components/common/icon";
+import type { NavTabId } from "./types/navigation";
 
 export interface TourStep {
   readonly target?: string;
-  readonly tab?: string;
+  readonly tab?: NavTabId;
   readonly title: string;
   readonly desc: string;
 }
 
 export interface OnboardingTourProps {
   readonly onComplete: () => void;
-  readonly onNavigate: (tab: string) => void;
+  readonly onNavigate: (tab: NavTabId) => void;
 }
 
 export const TOUR_STEPS: readonly TourStep[] = [

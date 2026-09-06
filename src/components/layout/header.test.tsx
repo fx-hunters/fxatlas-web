@@ -24,4 +24,19 @@ describe("Header", () => {
     fireEvent.click(screen.getByRole("button", { name: "라이트 모드로 변경" }));
     expect(onToggleTheme).toHaveBeenCalled();
   });
+
+  it("라이트 모드와 기본 화면 제목을 표시한다", () => {
+    render(
+      <Header
+        isDark={false}
+        onNavigateToMypage={vi.fn()}
+        onToggleTheme={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "홈" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "다크 모드로 변경" }),
+    ).toBeInTheDocument();
+  });
 });
