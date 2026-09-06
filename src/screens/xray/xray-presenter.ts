@@ -122,7 +122,7 @@ export function toXRayDashboardData(bundle: XrayBundle): XRayDashboardData {
     krwAmount: overview.krwAssetKrw,
     fxRatioPct: toPercent(overview.fxRatio),
     exposure: toExposure(bundle),
-    fxSensitivity1PctKrw: overview.sensitivity1pct.totalKrw,
+    fxSensitivity1pctKrw: overview.sensitivity1pct.totalKrw,
     pnl: toPnl(bundle),
     scenarios: toScenarios(bundle),
     concentration: toConcentration(bundle),

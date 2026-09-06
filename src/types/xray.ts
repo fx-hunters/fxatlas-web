@@ -67,7 +67,7 @@ export interface XRayDashboardData {
   readonly krwAmount: number;
   readonly fxRatioPct: number;
   readonly exposure: readonly ExposureShareItem[];
-  readonly fxSensitivity1PctKrw: number;
+  readonly fxSensitivity1pctKrw: number;
   readonly pnl: PnLDecompositionData;
   readonly scenarios: readonly StressScenarioItem[];
   readonly concentration: ConcentrationDiagnosis;

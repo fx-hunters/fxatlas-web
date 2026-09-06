@@ -53,7 +53,7 @@ describe("toXRayDashboardData", () => {
     expect(data.krwAmount).toBe(12_000_000);
     expect(data.fxKrw).toBe(8_000_000);
     expect(data.fxRatioPct).toBe(40);
-    expect(data.fxSensitivity1PctKrw).toBe(80_000);
+    expect(data.fxSensitivity1pctKrw).toBe(80_000);
     expect(data.exposure).toEqual([
       { currencyCode: "USD", krw: 6_000_000, sharePct: 75 },
       { currencyCode: "JPY", krw: 2_000_000, sharePct: 25 },
