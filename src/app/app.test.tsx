@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { fetchConnectivityChecks } from "../api/connectivity";
-import { App } from "./app";
+import { App, shouldShowTour, TOUR_STORAGE_KEY } from "./app";
 
 vi.mock("../api/connectivity", () => ({
   fetchConnectivityChecks: vi.fn().mockResolvedValue([]),
@@ -15,6 +15,27 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.mocked(fetchConnectivityChecks).mockClear();
+});
+
+describe("shouldShowTour helper", () => {
+  it("최초 접속(null)이거나 레거시/비정상 값이면 true를 반환한다", () => {
+    expect(shouldShowTour(null)).toBe(true);
+    expect(shouldShowTour("1")).toBe(true);
+    expect(shouldShowTour("abc")).toBe(true);
+    expect(shouldShowTour("0")).toBe(true);
+  });
+
+  it("최근 7일 이내에 투어를 완료한 경우 false를 반환한다", () => {
+    const now = Date.now();
+    const recent = (now - 2 * 24 * 60 * 60 * 1000).toString(); // 2일 전
+    expect(shouldShowTour(recent, now)).toBe(false);
+  });
+
+  it("7일 이상 미접속한(오랜만에 접속한) 유저인 경우 true를 반환한다", () => {
+    const now = Date.now();
+    const dormant = (now - 8 * 24 * 60 * 60 * 1000).toString(); // 8일 전
+    expect(shouldShowTour(dormant, now)).toBe(true);
+  });
 });
 
 describe("App", () => {
@@ -44,13 +65,13 @@ describe("App", () => {
     const skipBtn = screen.getByRole("button", { name: "투어 종료" });
     fireEvent.click(skipBtn);
 
-    expect(localStorage.getItem("divurve_tour_done")).toBe("1");
+    expect(Number(localStorage.getItem(TOUR_STORAGE_KEY))).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "오늘의 행동 (이번 주 확보액)" })).toBeInTheDocument();
   });
 
-  it("localStorage에 이미 투어 완료 기록이 있으면 투어를 띄우지 않고 즉시 대시보드로 진입한다", () => {
-    localStorage.setItem("divurve_tour_done", "1");
+  it("localStorage에 최근 투어 완료 기록이 있으면 투어를 띄우지 않고 즉시 대시보드로 진입한다", () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
@@ -58,6 +79,17 @@ describe("App", () => {
 
     expect(screen.queryByRole("dialog", { name: "온보딩 웰컴" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
+  });
+
+  it("오랜만에 접속한 유저(7일 초과)는 대시보드 진입 시 투어가 다시 표시된다", () => {
+    const eightDaysAgo = (Date.now() - 8 * 24 * 60 * 60 * 1000).toString();
+    localStorage.setItem(TOUR_STORAGE_KEY, eightDaysAgo);
+    render(<App />);
+
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
+    fireEvent.click(startBtn);
+
+    expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
   });
 
   it("localStorage 접근 에러가 발생해도 안전하게 투어를 표시하고 종료할 수 있다", () => {
@@ -84,7 +116,7 @@ describe("App", () => {
   });
 
   it("사이드바 탭 클릭 시 해당 화면으로 전환된다", async () => {
-    localStorage.setItem("divurve_tour_done", "1");
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     // 랜딩 페이지 -> 대시보드 진입
@@ -122,7 +154,7 @@ describe("App", () => {
   });
 
   it("헤더의 마이페이지 아바타 버튼 클릭 시 마이페이지로 이동한다", () => {
-    localStorage.setItem("divurve_tour_done", "1");
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
@@ -133,7 +165,7 @@ describe("App", () => {
   });
 
   it("데모 모드 토글 및 테마 토글이 정상 동작한다", () => {
-    localStorage.setItem("divurve_tour_done", "1");
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
@@ -150,7 +182,7 @@ describe("App", () => {
   });
 
   it("모바일 하단 내비게이션 탭 클릭 시 화면이 전환된다", () => {
-    localStorage.setItem("divurve_tour_done", "1");
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
@@ -203,7 +235,7 @@ describe("App", () => {
   });
 
   it("랜딩 페이지에서 무료 시작 클릭 시 AuthPage 회원가입 탭으로 이동하고 인증 완료 시 대시보드로 이동한다", () => {
-    localStorage.setItem("divurve_tour_done", "1");
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     const signupBtn = screen.getByRole("button", { name: /무료 시작/ });
@@ -221,7 +253,7 @@ describe("App", () => {
   });
 
   it("마이페이지에서 로그아웃 버튼 클릭 시 랜딩 페이지로 복귀한다", () => {
-    localStorage.setItem("divurve_tour_done", "1");
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
     // 대시보드 진입
@@ -239,5 +271,25 @@ describe("App", () => {
 
     // 랜딩 페이지로 복귀 확인
     expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
+  });
+
+  it("마이페이지에서 가이드 투어 다시보기 클릭 시 온보딩 투어가 다시 시작된다", () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    render(<App />);
+
+    // 대시보드 진입
+    const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
+    fireEvent.click(startBtn);
+
+    // 마이페이지 이동
+    const mypageBtn = screen.getAllByRole("button", { name: /마이페이지/ })[0];
+    fireEvent.click(mypageBtn);
+
+    // 가이드 투어 다시보기 클릭
+    const tourBtn = screen.getByRole("button", { name: /가이드 투어 다시보기/ });
+    fireEvent.click(tourBtn);
+
+    // 온보딩 웰컴 모달 표시 확인
+    expect(screen.getByRole("dialog", { name: "온보딩 웰컴" })).toBeInTheDocument();
   });
 });

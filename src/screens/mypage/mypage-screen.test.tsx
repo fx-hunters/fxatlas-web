@@ -306,4 +306,18 @@ describe("MyPageScreen Component", () => {
     fireEvent.mouseEnter(loginBtn);
     fireEvent.mouseLeave(loginBtn);
   });
+
+  it("handles onStartTour button click and hover in shortcuts section", () => {
+    const handleStartTour = vi.fn();
+    render(<MyPageScreen onStartTour={handleStartTour} />);
+
+    const tourBtn = screen.getByRole("button", { name: /가이드 투어 다시보기/ });
+    expect(tourBtn).toBeInTheDocument();
+
+    fireEvent.mouseEnter(tourBtn);
+    fireEvent.mouseLeave(tourBtn);
+
+    fireEvent.click(tourBtn);
+    expect(handleStartTour).toHaveBeenCalledTimes(1);
+  });
 });

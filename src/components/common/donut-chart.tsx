@@ -9,6 +9,8 @@ interface DonutChartProps {
   readonly trackColor?: string;
   readonly label?: string;
   readonly className?: string;
+  readonly isAnimationActive?: boolean;
+  readonly animationDuration?: number;
 }
 
 export function DonutChart({
@@ -19,6 +21,8 @@ export function DonutChart({
   trackColor = "var(--border)",
   label,
   className = "",
+  isAnimationActive = true,
+  animationDuration = 800,
 }: DonutChartProps) {
   const clampedPercent = Math.min(Math.max(percent, 0), 100);
   const outerRadius = size / 2;
@@ -28,6 +32,8 @@ export function DonutChart({
     { name: "value", value: Number(clampedPercent.toFixed(1)) },
     { name: "track", value: Number((100 - clampedPercent).toFixed(1)) },
   ];
+
+  const animDelay = Math.max(0, animationDuration - 100);
 
   return (
     <div
@@ -57,13 +63,16 @@ export function DonutChart({
             stroke="none"
             startAngle={90}
             endAngle={-270}
+            isAnimationActive={isAnimationActive}
+            animationDuration={animationDuration}
+            animationEasing="ease-out"
           >
             <Cell fill={color} />
             <Cell fill={trackColor} />
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      {/* 중앙 텍스트 */}
+      {/* 중앙 텍스트 - 파이 차트 회전 완료 타이밍에 맞춰 페이드 인 */}
       <div
         className="absolute flex items-baseline justify-center pointer-events-none"
         style={{
@@ -74,6 +83,10 @@ export function DonutChart({
           fontVariantNumeric: "tabular-nums",
           fontWeight: 700,
           color: "var(--text)",
+          opacity: isAnimationActive ? 0 : 1,
+          animation: isAnimationActive
+            ? `donutNumberFadeIn 0.35s var(--ease-out-smooth) ${animDelay}ms forwards`
+            : undefined,
         }}
       >
         <span style={{ fontSize: `${size * 0.22}px` }}>{Math.round(clampedPercent)}</span>

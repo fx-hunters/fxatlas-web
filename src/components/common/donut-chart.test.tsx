@@ -15,4 +15,16 @@ describe("DonutChart", () => {
     render(<DonutChart percent={150} />);
     expect(screen.getByText("100")).toBeInTheDocument();
   });
+
+  it("isAnimationActive가 false일 때 애니메이션 없이 바로 표시된다", () => {
+    const { container } = render(<DonutChart percent={45} isAnimationActive={false} />);
+    const centerText = container.querySelector(".pointer-events-none");
+    expect(centerText).toHaveStyle({ opacity: "1" });
+  });
+
+  it("isAnimationActive가 true일 때 파이 회전 완료 딜레이 애니메이션이 적용된다", () => {
+    const { container } = render(<DonutChart percent={45} isAnimationActive={true} animationDuration={600} />);
+    const centerText = container.querySelector(".pointer-events-none");
+    expect(centerText).toHaveStyle({ opacity: "0" });
+  });
 });

@@ -24,6 +24,22 @@ const TAB_LABELS: Record<NavTabId, string> = {
   connectivity: "연결 확인",
 };
 
+export const TOUR_STORAGE_KEY = "divurve_tour_done";
+export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7일 이상 경과 시 오랜만에 접속한 유저로 판단하여 재노출
+
+export function shouldShowTour(storedValue: string | null, now: number = Date.now()): boolean {
+  if (!storedValue) {
+    // 최초 접속 / 최초 로그인
+    return true;
+  }
+  const timestamp = Number(storedValue);
+  // 이전 버전 "1" 등 단순 플래그이거나 비정상 타임스탬프인 경우, 또는 7일 이상 미접속 경과 시
+  if (Number.isNaN(timestamp) || timestamp <= 1) {
+    return true;
+  }
+  return now - timestamp >= TOUR_INACTIVITY_THRESHOLD_MS;
+}
+
 export function App() {
   const [showLanding, setShowLanding] = useState<boolean>(true);
   const [showAuth, setShowAuth] = useState<boolean>(false);
@@ -61,8 +77,8 @@ export function App() {
     setShowLanding(false);
     setShowAuth(false);
     try {
-      const seen = localStorage.getItem("divurve_tour_done");
-      if (!seen) {
+      const stored = localStorage.getItem(TOUR_STORAGE_KEY);
+      if (shouldShowTour(stored)) {
         setShowTour(true);
       }
     } catch {
@@ -73,10 +89,14 @@ export function App() {
   const handleTourComplete = () => {
     setShowTour(false);
     try {
-      localStorage.setItem("divurve_tour_done", "1");
+      localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     } catch {
       // localStorage disabled fallback
     }
+  };
+
+  const handleStartTour = () => {
+    setShowTour(true);
   };
 
   const handleSetIsDark = (dark: boolean) => {
@@ -152,6 +172,7 @@ export function App() {
                 onNavigate={setActiveTab}
                 onLogin={goToLogin}
                 onLogout={handleLogout}
+                onStartTour={handleStartTour}
               />
             )}
             {activeTab === "connectivity" && <ConnectivityCheckPanel />}

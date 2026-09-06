@@ -8,6 +8,7 @@ export interface MyPageScreenProps {
   readonly onNavigate?: (tab: NavTabId) => void;
   readonly onLogin?: () => void;
   readonly onLogout?: () => void;
+  readonly onStartTour?: () => void;
 }
 
 export function MyPageScreen({
@@ -16,6 +17,7 @@ export function MyPageScreen({
   onNavigate,
   onLogin,
   onLogout,
+  onStartTour,
 }: MyPageScreenProps) {
   const {
     profile,
@@ -608,6 +610,38 @@ export function MyPageScreen({
           >
             외화 목표 편집 <Icon name="arrowRight" size={16} className="opacity-70" />
           </button>
+          {onStartTour && (
+            <button
+              type="button"
+              onClick={onStartTour}
+              style={{
+                fontSize: '0.875rem',
+                backgroundColor: 'var(--bg)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                fontWeight: 600,
+                padding: '0.75rem 1.25rem',
+                borderRadius: 'var(--radius-xl)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.color = 'var(--primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.color = 'var(--text)';
+              }}
+            >
+              <Icon name="sparkles" size={16} className="text-primary" />
+              <span>가이드 투어 다시보기</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
