@@ -1,77 +1,93 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ApiError, type ApiResult } from "../../api/client";
+import {
+  DEMO_HOME_DATA,
+  DEMO_HOME_RECORDED_DATA,
+} from "../../api/fixtures/home-dashboard";
+import type { HomeSummaryResponse } from "../../api/generated/divurve-api";
+import { fetchHomeSummary } from "../../api/home";
 import type { HomeDashboardData } from "../../types/home";
 
-export const DEMO_HOME_DATA: HomeDashboardData = {
-  todayAction: {
-    amountUsd: 580,
-    amountKrw: 798000,
-    deadlineDday: 3,
-    fundedRatio: 0.42,
-    remainingRounds: 2,
-  },
-  fxHolding: {
-    fxRatio: 0.36,
-    fxKrw: 64000000,
-    krwAmount: 36000000,
-    dayOverDayDiffPctPoints: 0.2,
-    sensitivity1PctKrw: 14200,
-    breakdown: {
-      usd: 75,
-      jpy: 15,
-      eur: 10,
-    },
-  },
-  attentionAlert: {
-    currency: "JPY",
-    title: "JPY 임박 이벤트",
-    message: "내일 BOJ 금리 결정. 안전 버킷 하한을 점검하세요.",
-    targetTab: "planner",
-  },
-  marketSummary: {
-    pair: "USD/KRW",
-    currentPrice: 1382.4,
-    bandLower: 1378,
-    bandUpper: 1390,
-    sparkline: [
-      { time: "09:00", price: 1378.2 },
-      { time: "10:00", price: 1379.5 },
-      { time: "11:00", price: 1381.1 },
-      { time: "12:00", price: 1380.4 },
-      { time: "13:00", price: 1382.0 },
-      { time: "14:00", price: 1382.4 },
-    ],
-  },
-  weeklyComparison: {
-    fundedRatioDiffPct: 12.5,
-    valuationDiffKrw: 312000,
-    usdConcentrationDiffPctPoints: 2.1,
-  },
-};
+export type HomeSummaryLoader = () => Promise<ApiResult<HomeSummaryResponse>>;
 
 export type HomeDashboardState =
+  | { readonly status: "loading" }
+  | { readonly status: "error"; readonly message: string }
   | { readonly status: "empty" }
-  | { readonly status: "ready"; readonly data: HomeDashboardData };
+  | {
+      readonly status: "ready";
+      readonly source: "mock";
+      readonly data: HomeDashboardData;
+    }
+  | {
+      readonly status: "ready";
+      readonly source: "api";
+      readonly result: ApiResult<HomeSummaryResponse>;
+    };
 
-export function useHomeDashboard(isDemo: boolean = true) {
-  const [data, setData] = useState<HomeDashboardData>(DEMO_HOME_DATA);
+export function hasHomeContent(data: HomeSummaryResponse): boolean {
+  return Boolean(
+    data.todayAction?.heroAmount ||
+      data.currencyStatus?.totalAssets ||
+      data.notice?.message ||
+      data.weeklyChange?.summary ||
+      data.marketSummary?.summary,
+  );
+}
 
-  const handleRecordComplete = useCallback(() => {
-    setData((prev) => ({
-      ...prev,
-      todayAction: {
-        ...prev.todayAction,
-        fundedRatio: Math.min(prev.todayAction.fundedRatio + 0.1, 1),
-        remainingRounds: Math.max(prev.todayAction.remainingRounds - 1, 0),
-      },
-    }));
+function toHomeErrorMessage(error: unknown): string {
+  return error instanceof ApiError
+    ? error.message
+    : "홈 정보를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.";
+}
+
+export function useHomeDashboard(
+  isDemo: boolean = true,
+  loader: HomeSummaryLoader = fetchHomeSummary,
+) {
+  const [demoData, setDemoData] = useState<HomeDashboardData>(DEMO_HOME_DATA);
+  const [apiState, setApiState] = useState<HomeDashboardState>({
+    status: "loading",
+  });
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (isDemo) return;
+    let isActive = true;
+    setApiState({ status: "loading" });
+
+    void loader()
+      .then((result) => {
+        if (!isActive) return;
+        setApiState(
+          hasHomeContent(result.data)
+            ? { status: "ready", source: "api", result }
+            : { status: "empty" },
+        );
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setApiState({ status: "error", message: toHomeErrorMessage(error) });
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isDemo, loader, reloadKey]);
+
+  const recordRoundComplete = useCallback(() => {
+    setDemoData(DEMO_HOME_RECORDED_DATA);
   }, []);
-
-  const state: HomeDashboardState = isDemo
-    ? { status: "ready", data }
-    : { status: "empty" };
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
   return {
-    state,
-    recordRoundComplete: handleRecordComplete,
+    state: isDemo
+      ? ({ status: "ready", source: "mock", data: demoData } as const)
+      : apiState,
+    recordRoundComplete,
+    reload,
   };
 }
+
+export { DEMO_HOME_DATA } from "../../api/fixtures/home-dashboard";

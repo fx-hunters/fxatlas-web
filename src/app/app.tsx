@@ -15,6 +15,9 @@ import { MyPageScreen } from "../screens/mypage/mypage-screen";
 import { RouteScreen } from "../screens/route/route-screen";
 import { XRayScreen } from "../screens/xray/xray-screen";
 import { NAV_ITEMS } from "../types/navigation";
+import { login, logout, signup, startDemoSession } from "../api/auth";
+import { ApiError } from "../api/client";
+import { readApiSession } from "../api/session";
 
 export const TOUR_STORAGE_KEY = "divurve_tour_done";
 export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -41,7 +44,9 @@ export function App() {
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showTour, setShowTour] = useState<boolean>(false);
-  const [isDemo, setIsDemo] = useState<boolean>(true);
+  const [isDemo, setIsDemo] = useState<boolean>(() => readApiSession() === null);
+  const [isApiSwitching, setIsApiSwitching] = useState(false);
+  const [apiSwitchError, setApiSwitchError] = useState<string | null>(null);
   const { isDark, toggleTheme, setTheme } = useTheme("dark");
 
   const currentTabItem = NAV_ITEMS.find((item) => item.id === activeTab);
@@ -66,6 +71,8 @@ export function App() {
   };
 
   const handleLogout = () => {
+    logout();
+    setIsDemo(true);
     navigate("home");
     setShowLanding(true);
     setShowAuth(false);
@@ -81,6 +88,33 @@ export function App() {
       }
     } catch {
       setShowTour(true);
+    }
+  };
+
+  const handleAuthenticated = () => {
+    setIsDemo(false);
+    handleEnterDashboard();
+  };
+
+  const handleToggleDataSource = async () => {
+    setApiSwitchError(null);
+    if (!isDemo) {
+      setIsDemo(true);
+      return;
+    }
+
+    setIsApiSwitching(true);
+    try {
+      await startDemoSession();
+      setIsDemo(false);
+    } catch (error) {
+      setApiSwitchError(
+        error instanceof ApiError
+          ? error.message
+          : "API 데모 계정을 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    } finally {
+      setIsApiSwitching(false);
     }
   };
 
@@ -117,8 +151,14 @@ export function App() {
     return (
       <AuthPage
         initialMode={authMode}
-        onSuccess={handleEnterDashboard}
+        onSuccess={handleAuthenticated}
         onBack={handleBackToLanding}
+        authenticateLogin={async (input, persistence) => {
+          await login(input, persistence);
+        }}
+        authenticateSignup={async (input) => {
+          await signup(input);
+        }}
       />
     );
   }
@@ -129,7 +169,8 @@ export function App() {
         activeTab={activeTab}
         isDemo={isDemo}
         onSelectTab={navigate}
-        onToggleDemo={() => setIsDemo((previous) => !previous)}
+        onToggleDemo={() => void handleToggleDataSource()}
+        isDemoSwitching={isApiSwitching}
       />
 
       <div className="app-main-layout">
@@ -141,6 +182,22 @@ export function App() {
         />
 
         <main className="app-scroll-content">
+          {apiSwitchError && (
+            <div
+              role="alert"
+              style={{
+                margin: "1rem auto 0",
+                maxWidth: "1200px",
+                padding: "0.75rem 1rem",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--danger-border)",
+                backgroundColor: "var(--danger-bg)",
+                color: "var(--danger)",
+              }}
+            >
+              {apiSwitchError}
+            </div>
+          )}
           <div
             key={activeTab}
             className="app-content-container page-enter-animation"
@@ -160,6 +217,7 @@ export function App() {
             {activeTab === "mypage" && (
               <MyPageScreen
                 isDemo={isDemo}
+                isLoggedIn={true}
                 onNavigate={navigate}
                 onLogin={goToLogin}
                 onLogout={handleLogout}
@@ -170,7 +228,7 @@ export function App() {
           </div>
         </main>
 
-        <Footer />
+        <Footer isDemo={isDemo} />
       </div>
 
       <MobileNav activeTab={activeTab} onSelectTab={navigate} />

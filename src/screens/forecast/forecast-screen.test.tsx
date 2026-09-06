@@ -35,7 +35,7 @@ describe("ForecastScreen", () => {
   });
 
   it("onNavigate prop 없이도 에러 없이 렌더링되고 동작한다", () => {
-    render(<ForecastScreen isDemo={false} />);
+    render(<ForecastScreen isDemo={true} />);
     fireEvent.click(screen.getByRole("button", { name: /내 계획에 적용하기/ }));
     expect(screen.getByText("EUR")).toBeInTheDocument();
   });

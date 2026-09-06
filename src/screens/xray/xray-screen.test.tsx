@@ -25,7 +25,7 @@ describe("XRayScreen", () => {
   });
 
   it("onNavigate prop 없이도 에러 없이 렌더링되고 동작한다", () => {
-    render(<XRayScreen isDemo={false} />);
+    render(<XRayScreen isDemo={true} />);
     expect(screen.getByRole("heading", { name: "외화 비중" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "계획 수정" }));
   });

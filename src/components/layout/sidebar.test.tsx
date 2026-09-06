@@ -26,13 +26,18 @@ describe("Sidebar", () => {
 
   it("데모 토글 버튼 클릭 시 핸들러가 호출된다", () => {
     render(<Sidebar {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: /데모 데이터 켜짐/ }));
+    fireEvent.click(screen.getByRole("button", { name: /목 데이터 사용 중/ }));
     expect(defaultProps.onToggleDemo).toHaveBeenCalled();
   });
 
   it("데모가 꺼진 상태의 제어 문구를 표시한다", () => {
     render(<Sidebar {...defaultProps} isDemo={false} />);
 
-    expect(screen.getByRole("button", { name: "빈 상태 보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "API 데이터 사용 중" })).toBeInTheDocument();
+  });
+
+  it("API 연결 중에는 전환 버튼을 비활성화한다", () => {
+    render(<Sidebar {...defaultProps} isDemoSwitching={true} />);
+    expect(screen.getByRole("button", { name: "API 연결 중…" })).toBeDisabled();
   });
 });

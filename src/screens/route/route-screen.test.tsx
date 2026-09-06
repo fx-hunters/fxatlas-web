@@ -341,7 +341,7 @@ describe("RouteScreen", () => {
   });
 
   it("데이터가 없으면 empty 상태를 표시한다", async () => {
-    render(<RouteScreen isDemo={false} />);
+    render(<RouteScreen isDemo={false} loadPlan={async () => null} />);
 
     expect(
       await screen.findByText("표시할 목표 또는 계획 데이터가 없습니다."),

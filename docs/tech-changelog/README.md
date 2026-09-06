@@ -34,3 +34,17 @@
 | [0004](./0004-connectivity-check-test-page.md) | 프론트·DB 연동 확인용 테스트 페이지 | 2026-09-05 |
 | [0005](./0005-responsive-layout-and-home-screen.md) | 반응형 공통 레이아웃 및 홈 대시보드 | 2026-09-05 |
 | [0006](./0006-route-planner-screen.md) | Curve 중심 사용자용 플래너 프로토타입 | 2026-09-06 |
+| [0007](./0007-xray-currency-analysis-screen.md) | 내 자산 통화 노출 및 적합도 분석 화면 | 2026-09-05 |
+| [0008](./0008-forecast-exchange-range-screen.md) | 환율 범위 팬 차트 및 전망 화면 | 2026-09-05 |
+| [0009](./0009-mypage-user-settings-and-routing.md) | 마이페이지 사용자 설정 및 전역 라우팅 점검 | 2026-09-05 |
+| [0010](./0010-smooth-bar-in-out-animations.md) | 인디케이터·진행률 바 모션 개선 | 2026-09-06 |
+| [0011](./0011-complete-ui-interaction-and-animation-spec.md) | 차트 진입 애니메이션 및 UI 인터랙션 명세 | 2026-09-06 |
+| [0012](./0012-fan-chart-tooltip-visibility-enhancement.md) | 팬 차트 툴팁 가시성 개선 | 2026-09-06 |
+| [0013](./0013-implement-landing-page.md) | DIVURVE 랜딩 페이지 및 온보딩 진입 | 2026-09-06 |
+| [0014](./0014-implement-onboarding-tour.md) | 온보딩 투어 가이드 및 대시보드 연동 | 2026-09-06 |
+| [0015](./0015-implement-auth-page.md) | 인증 페이지 및 랜딩·앱 연동 | 2026-09-06 |
+| [0016](./0016-mypage-login-logout-support.md) | 마이페이지 로그인·로그아웃 상태 분기 | 2026-09-06 |
+| [0017](./0017-donut-chart-timed-fade-in.md) | 도넛 차트 중앙 숫자 페이드 인 | 2026-09-06 |
+| [0018](./0018-onboarding-tour-reactivation-and-dormant-logic.md) | 온보딩 재노출 및 다시보기 | 2026-09-06 |
+| [0019](./0019-fix-responsive-ui-and-deduplicate-theme-button.md) | 반응형 UI 개선 및 테마 버튼 중복 제거 | 2026-09-06 |
+| [0020](./0020-connect-swagger-api.md) | Swagger API 경계 및 실데이터 화면 연동 | 2026-09-07 |

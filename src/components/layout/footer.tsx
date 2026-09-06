@@ -1,4 +1,8 @@
-export function Footer() {
+interface FooterProps {
+  readonly isDemo?: boolean;
+}
+
+export function Footer({ isDemo = true }: FooterProps) {
   return (
     <footer
       className="app-footer"
@@ -13,7 +17,8 @@ export function Footer() {
         transition: "background-color 0.2s, border-color 0.2s",
       }}
     >
-      이 정보는 투자 권유가 아니며 실제 거래 전 별도 확인이 필요합니다. | 데이터 출처: 예시 데이터
+      이 정보는 투자 권유가 아니며 실제 거래 전 별도 확인이 필요합니다. | 데이터 출처:{" "}
+      {isDemo ? "예시 데이터" : "연결된 API 응답"}
     </footer>
   );
 }

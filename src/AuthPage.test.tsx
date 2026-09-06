@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { AuthPage, Field, pwStrength, fmtTime, inputBtnStyle } from "./AuthPage";
+import { ApiError } from "./api/client";
 
 describe("AuthPage Utils", () => {
   it("fmtTime이 초 단위를 mm:ss 형식으로 정확히 변환한다", () => {
@@ -12,11 +13,11 @@ describe("AuthPage Utils", () => {
 
   it("pwStrength가 비밀번호 길이에 따른 점수와 라벨을 반환한다", () => {
     expect(pwStrength("")).toEqual({ score: 0, label: "", color: "transparent" });
-    expect(pwStrength("short")).toEqual({ score: 0, label: "매우 약함", color: "#E3705E" });
-    expect(pwStrength("12345678")).toEqual({ score: 2, label: "약함", color: "#D9A03C" });
-    expect(pwStrength("12345678Ab")).toEqual({ score: 3, label: "보통", color: "#D9A03C" });
-    expect(pwStrength("12345678Ab!")).toEqual({ score: 4, label: "강함", color: "#43B37C" });
-    expect(pwStrength("123456789012Ab!")).toEqual({ score: 5, label: "매우 강함", color: "#00FFAA" });
+    expect(pwStrength("short")).toEqual({ score: 0, label: "매우 약함", color: "var(--danger)" });
+    expect(pwStrength("12345678")).toEqual({ score: 2, label: "약함", color: "var(--warn)" });
+    expect(pwStrength("12345678Ab")).toEqual({ score: 3, label: "보통", color: "var(--warn)" });
+    expect(pwStrength("12345678Ab!")).toEqual({ score: 4, label: "강함", color: "var(--normal)" });
+    expect(pwStrength("123456789012Ab!")).toEqual({ score: 5, label: "매우 강함", color: "var(--primary)" });
   });
 
   it("inputBtnStyle이 active 상태에 따라 적절한 스타일 객체를 반환한다", () => {
@@ -24,7 +25,7 @@ describe("AuthPage Utils", () => {
     expect(activeStyle.background).toBe("var(--primary)");
 
     const inactiveStyle = inputBtnStyle(false);
-    expect(inactiveStyle.background).toBe("rgba(0,255,170,0.1)");
+    expect(inactiveStyle.background).toBe("var(--primary-subtle)");
   });
 });
 
@@ -57,8 +58,9 @@ describe("AuthPage Component", () => {
     expect(screen.getByRole("button", { name: "구글 로그인" })).toBeInTheDocument();
   });
 
-  it("로그인 폼에서 빈 값 제출 시 에러 메시지를 표시하고, 입력 시 에러가 해제된다", () => {
-    render(<AuthPage onSuccess={onSuccessMock} onBack={onBackMock} />);
+  it("로그인 폼에서 빈 값 제출 시 에러 메시지를 표시하고, 입력 시 API 인증을 요청한다", async () => {
+    const authenticateLogin = vi.fn().mockResolvedValue(undefined);
+    render(<AuthPage onSuccess={onSuccessMock} onBack={onBackMock} authenticateLogin={authenticateLogin} />);
 
     const loginSubmitBtn = screen.getByRole("button", { name: "로그인" });
     fireEvent.click(loginSubmitBtn);
@@ -78,8 +80,12 @@ describe("AuthPage Component", () => {
     expect(screen.queryByText("비밀번호를 입력하세요.")).not.toBeInTheDocument();
 
     // 재제출 시 성공
-    fireEvent.click(loginSubmitBtn);
+    await act(async () => fireEvent.click(loginSubmitBtn));
     expect(onSuccessMock).toHaveBeenCalledTimes(1);
+    expect(authenticateLogin).toHaveBeenCalledWith(
+      { email: "user@example.com", password: "password123!" },
+      "session",
+    );
   });
 
   it("로그인 비밀번호 보기/숨기기 토글 및 체크박스 동작을 지원한다", () => {
@@ -105,17 +111,16 @@ describe("AuthPage Component", () => {
     expect(autoLoginCheckbox).toBeChecked();
   });
 
-  it("소셜 로그인 버튼 클릭 시 onSuccess 콜백을 호출한다", () => {
+  it("Swagger에 없는 소셜 로그인은 안내하고 인증 완료로 처리하지 않는다", () => {
     render(<AuthPage onSuccess={onSuccessMock} onBack={onBackMock} />);
 
     fireEvent.click(screen.getByRole("button", { name: "카카오 로그인" }));
-    expect(onSuccessMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert")).toHaveTextContent("소셜 로그인 API");
 
     fireEvent.click(screen.getByRole("button", { name: "네이버 로그인" }));
-    expect(onSuccessMock).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByRole("button", { name: "구글 로그인" }));
-    expect(onSuccessMock).toHaveBeenCalledTimes(3);
+    expect(onSuccessMock).not.toHaveBeenCalled();
   });
 
   it("홈으로 돌아가기 버튼 클릭 시 onBack 콜백을 호출한다", () => {
@@ -190,28 +195,23 @@ describe("AuthPage Component", () => {
     render(<AuthPage initialMode="signup" onSuccess={onSuccessMock} onBack={onBackMock} />);
 
     const emailInput = screen.getByLabelText("이메일");
-    const checkDupBtn = screen.getByRole("button", { name: "중복확인" });
+    const checkDupBtn = screen.getByRole("button", { name: "형식 확인" });
 
     // 잘못된 형식으로 중복확인 클릭
     fireEvent.change(emailInput, { target: { value: "invalid-email" } });
     fireEvent.click(checkDupBtn);
     expect(screen.getByText("올바른 이메일을 입력하세요.")).toBeInTheDocument();
 
-    // 중복된 이메일 (admin@divurve.com)
+    // 형식이 맞는 이메일은 가입 제출 시 서버가 중복 여부를 확인한다.
     fireEvent.change(emailInput, { target: { value: "admin@divurve.com" } });
     fireEvent.click(checkDupBtn);
-    expect(screen.getByText("이미 사용 중인 이메일입니다.")).toBeInTheDocument();
-
-    // 사용 가능한 이메일
-    fireEvent.change(emailInput, { target: { value: "newuser@divurve.com" } });
-    fireEvent.click(checkDupBtn);
-    expect(screen.getByText("사용 가능한 이메일입니다.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "확인완료" })).toBeInTheDocument();
+    expect(screen.getByText("가입 시 서버에서 중복 여부를 확인합니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "형식 확인됨" })).toBeInTheDocument();
 
     // 이메일 변경 시 확인 상태 리셋
     fireEvent.change(emailInput, { target: { value: "newuser2@divurve.com" } });
-    expect(screen.queryByText("사용 가능한 이메일입니다.")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "중복확인" })).toBeInTheDocument();
+    expect(screen.queryByText("가입 시 서버에서 중복 여부를 확인합니다.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "형식 확인" })).toBeInTheDocument();
   });
 
   it("회원가입 비밀번호 강도 표시, 확인 일치 및 가시성 토글이 정상 동작한다", () => {
@@ -319,8 +319,9 @@ describe("AuthPage Component", () => {
     expect(allTermsCheckbox).toBeChecked();
   });
 
-  it("회원가입 폼의 모든 필드가 올바를 때 회원가입이 성공하고 onSuccess를 호출한다", () => {
-    render(<AuthPage initialMode="signup" onSuccess={onSuccessMock} onBack={onBackMock} />);
+  it("회원가입 폼의 모든 필드가 올바를 때 API 회원가입 후 onSuccess를 호출한다", async () => {
+    const authenticateSignup = vi.fn().mockResolvedValue(undefined);
+    render(<AuthPage initialMode="signup" onSuccess={onSuccessMock} onBack={onBackMock} authenticateSignup={authenticateSignup} />);
 
     // 이름
     fireEvent.change(screen.getByLabelText("이름"), { target: { value: "홍길동" } });
@@ -328,7 +329,7 @@ describe("AuthPage Component", () => {
     // 이메일 + 중복확인
     const emailInput = screen.getByLabelText("이메일");
     fireEvent.change(emailInput, { target: { value: "valid@divurve.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "중복확인" }));
+    fireEvent.click(screen.getByRole("button", { name: "형식 확인" }));
 
     // 비밀번호 & 확인
     fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "Password123!" } });
@@ -344,21 +345,26 @@ describe("AuthPage Component", () => {
     fireEvent.click(screen.getByLabelText(/전체 동의/));
 
     // 가입하기 제출
-    fireEvent.click(screen.getByRole("button", { name: "가입하기" }));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "가입하기" })));
     expect(onSuccessMock).toHaveBeenCalledTimes(1);
+    expect(authenticateSignup).toHaveBeenCalledWith({
+      email: "valid@divurve.com",
+      password: "Password123!",
+      name: "홍길동",
+    });
   });
 
-  it("회원가입 모드에서 소셜 버튼 클릭 시에도 onSuccess를 호출한다", () => {
+  it("회원가입 모드의 소셜 버튼도 미지원 안내를 표시한다", () => {
     render(<AuthPage initialMode="signup" onSuccess={onSuccessMock} onBack={onBackMock} />);
 
+    expect(screen.getByText(/휴대폰 인증은 현재 Swagger 계약에 없어/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "카카오로 시작하기" }));
-    expect(onSuccessMock).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "네이버로 시작하기" }));
-    expect(onSuccessMock).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByRole("button", { name: "구글로 시작하기" }));
-    expect(onSuccessMock).toHaveBeenCalledTimes(3);
+    expect(onSuccessMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("소셜 로그인 API");
   });
 
   it("약관 에러 상태에서 개별 약관 체크 시 에러가 해제된다", () => {
@@ -478,17 +484,123 @@ describe("AuthPage Component", () => {
     expect(screen.getByText("도움말 텍스트입니다.")).toBeInTheDocument();
   });
 
-  it("이메일 중복확인에서 중복 판정된 상태에서 가입하기 클릭 시 중복 에러가 표시된다", () => {
+  it("형식 확인은 잘못된 이메일을 거부하고 올바른 이메일을 승인한다", () => {
     render(<AuthPage initialMode="signup" onSuccess={onSuccessMock} onBack={onBackMock} />);
 
-    // 중복 이메일 입력 및 중복확인
+    // 잘못된 이메일 입력 및 형식 확인
     const emailInput = screen.getByLabelText("이메일");
+    fireEvent.change(emailInput, { target: { value: "invalid" } });
+    fireEvent.click(screen.getByRole("button", { name: "형식 확인" }));
+    expect(screen.getByText("올바른 이메일을 입력하세요.")).toBeInTheDocument();
     fireEvent.change(emailInput, { target: { value: "admin@divurve.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "중복확인" }));
-    expect(screen.getByText("이미 사용 중인 이메일입니다.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "형식 확인" }));
+    expect(screen.getByText("가입 시 서버에서 중복 여부를 확인합니다.")).toBeInTheDocument();
+  });
 
-    // 제출 시에도 중복 에러 유지
-    fireEvent.click(screen.getByRole("button", { name: "가입하기" }));
-    expect(screen.getByText("이미 사용 중인 이메일입니다.")).toBeInTheDocument();
+  it("API 인증 오류와 알 수 없는 오류를 폼에 표시한다", async () => {
+    const apiFailure = vi.fn().mockRejectedValue(new ApiError("자격 증명 오류", 401, "UNAUTHORIZED"));
+    const { unmount } = render(
+      <AuthPage onSuccess={onSuccessMock} onBack={onBackMock} authenticateLogin={apiFailure} />,
+    );
+    fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "user@example.com" } });
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "password" } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "로그인" })));
+    expect(screen.getByRole("alert")).toHaveTextContent("자격 증명 오류");
+    unmount();
+
+    const unknownFailure = vi.fn().mockRejectedValue(new Error("unknown"));
+    render(
+      <AuthPage onSuccess={onSuccessMock} onBack={onBackMock} authenticateLogin={unknownFailure} />,
+    );
+    fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "user@example.com" } });
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "password" } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "로그인" })));
+    expect(screen.getByRole("alert")).toHaveTextContent("로그인 요청을 완료하지 못했습니다");
+  });
+
+  it("기본 로그인 어댑터와 자동 로그인 저장 방식을 사용한다", async () => {
+    render(<AuthPage onSuccess={onSuccessMock} onBack={onBackMock} />);
+    fireEvent.change(screen.getByLabelText("이메일"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("비밀번호"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.click(screen.getByLabelText("자동 로그인"));
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "로그인" })),
+    );
+    expect(onSuccessMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("로그인 요청 중 상태를 표시한다", async () => {
+    let resolveLogin!: () => void;
+    const authenticateLogin = vi.fn().mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveLogin = resolve;
+      }),
+    );
+    render(
+      <AuthPage
+        onSuccess={onSuccessMock}
+        onBack={onBackMock}
+        authenticateLogin={authenticateLogin}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("이메일"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("비밀번호"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+    expect(screen.getByRole("button", { name: "로그인 중…" })).toBeDisabled();
+    await act(async () => resolveLogin());
+    expect(onSuccessMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [new ApiError("가입 API 오류", 400, "BAD"), "가입 API 오류"],
+    [
+      new Error("network"),
+      "회원가입 요청을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    ],
+  ])("회원가입 API 오류를 폼에 표시한다", async (error, message) => {
+    const authenticateSignup = vi.fn().mockRejectedValue(error);
+    render(
+      <AuthPage
+        initialMode="signup"
+        onSuccess={onSuccessMock}
+        onBack={onBackMock}
+        authenticateSignup={authenticateSignup}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("이름"), {
+      target: { value: "홍길동" },
+    });
+    fireEvent.change(screen.getByLabelText("이메일"), {
+      target: { value: "valid@divurve.com" },
+    });
+    fireEvent.change(screen.getByLabelText("비밀번호"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.change(screen.getByLabelText("비밀번호 확인"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.change(screen.getByLabelText("휴대폰 번호"), {
+      target: { value: "010-9999-8888" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "인증번호 발송" }));
+    fireEvent.change(screen.getByLabelText("인증번호"), {
+      target: { value: "9876" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    fireEvent.click(screen.getByLabelText(/전체 동의/));
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "가입하기" })),
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(message);
+    expect(onSuccessMock).not.toHaveBeenCalled();
   });
 });

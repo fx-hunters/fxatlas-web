@@ -21,7 +21,9 @@ export interface HealthPing {
 
 /** 저장된 연결 확인 레코드 전체를 조회한다. */
 export function fetchConnectivityChecks(): Promise<ConnectivityCheck[]> {
-  return request<ConnectivityCheck[]>("/api/v1/connectivity-checks");
+  return request<ConnectivityCheck[]>("/api/v1/connectivity-checks", {
+    requiresAuth: false,
+  });
 }
 
 /** message로 새 연결 확인 레코드를 만들고, 생성된 행을 반환한다. */
@@ -30,11 +32,14 @@ export function createConnectivityCheck(
 ): Promise<ConnectivityCheck> {
   return request<ConnectivityCheck>("/api/v1/connectivity-checks", {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: { message },
+    requiresAuth: false,
   });
 }
 
 /** DB를 건드리지 않는 기본 liveness 확인. */
 export function fetchHealthPing(): Promise<HealthPing> {
-  return request<HealthPing>("/api/v1/health/ping");
+  return request<HealthPing>("/api/v1/health/ping", {
+    requiresAuth: false,
+  });
 }
