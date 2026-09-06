@@ -4,7 +4,7 @@ import { useXRay } from "./use-xray";
 
 describe("useXRay", () => {
   it("초기 상태를 올바르게 제공한다", () => {
-    const { result } = renderHook(() => useXRay(true));
+    const { result } = renderHook(() => useXRay());
 
     expect(result.current.activeTab).toBe("exposure");
     expect(result.current.selectedScenarioId).toBe("2008");
@@ -14,7 +14,7 @@ describe("useXRay", () => {
   });
 
   it("탭을 전환하고 시나리오를 선택할 수 있다", () => {
-    const { result } = renderHook(() => useXRay(true));
+    const { result } = renderHook(() => useXRay());
 
     act(() => {
       result.current.setActiveTab("fitness");
@@ -34,7 +34,7 @@ describe("useXRay", () => {
   });
 
   it("EUR 시뮬레이션 슬라이더 값을 클램핑하여 설정한다", () => {
-    const { result } = renderHook(() => useXRay(true));
+    const { result } = renderHook(() => useXRay());
 
     act(() => {
       result.current.setEurSimulationPct(25);
@@ -53,7 +53,7 @@ describe("useXRay", () => {
   });
 
   it("자산 편집 모달 열기/닫기 동작을 제어한다", () => {
-    const { result } = renderHook(() => useXRay(true));
+    const { result } = renderHook(() => useXRay());
 
     act(() => {
       result.current.openAssetModal();

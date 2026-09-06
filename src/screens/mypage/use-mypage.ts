@@ -26,7 +26,7 @@ const RISK_PROFILES: readonly RiskProfileType[] = [
   '적극 투자형',
 ];
 
-export function useMyPage(isDemo = true) {
+export function useMyPage() {
   const [profile, setProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
   const [bankPreferentialRate, setBankPreferentialRate] = useState<number>(80);
   const [notifications, setNotifications] = useState<Record<NotificationKey, boolean>>({
@@ -92,7 +92,6 @@ export function useMyPage(isDemo = true) {
   }, [bankPreferentialRate]);
 
   return {
-    isDemo,
     profile,
     bankPreferentialRate,
     notifications,

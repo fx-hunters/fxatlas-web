@@ -1,9 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ApiStateView } from "../../components/common/api-state-view";
 import { Badge } from "../../components/common/badge";
 import { Card } from "../../components/common/card";
+import type {
+  SettingsResponse,
+  SettingsUpdateRequest,
+} from "../../api/generated/divurve-api";
 import type { NavTabId } from "../../types/navigation";
-import { useMyPageApi, type MyPageApiDependencies } from "./use-mypage-api";
+import {
+  useMyPageApi,
+  type MyPageApiDependencies,
+  type SettingsSaveState,
+} from "./use-mypage-api";
 
 interface MyPageApiScreenProps {
   readonly onNavigate?: (tab: NavTabId) => void;
@@ -19,16 +27,6 @@ export function MyPageApiScreen({
   dependencies,
 }: MyPageApiScreenProps) {
   const { state, saveState, reload, saveSettings } = useMyPageApi(dependencies);
-  const [discountRatio, setDiscountRatio] = useState("0");
-  const [explainLevel, setExplainLevel] = useState("simple");
-  const [explainDomain, setExplainDomain] = useState("plain");
-
-  useEffect(() => {
-    if (state.status !== "success") return;
-    setDiscountRatio(String(state.data.settings.fxDiscountRatio));
-    setExplainLevel(state.data.settings.explainLevel);
-    setExplainDomain(state.data.settings.explainDomain);
-  }, [state]);
 
   if (state.status === "loading") {
     return (
@@ -82,66 +80,13 @@ export function MyPageApiScreen({
         )}
       </Card>
 
-      <Card title="기본 설정">
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void saveSettings({
-              fxDiscountRatio: Number(discountRatio),
-              explainLevel,
-              explainDomain,
-            });
-          }}
-          style={{ display: "grid", gap: "1rem" }}
-        >
-          <label style={{ display: "grid", gap: "0.375rem", color: "var(--text-muted)" }}>
-            환전 우대율 API 값 (0~1)
-            <input
-              type="number"
-              min="0"
-              max="1"
-              step="0.01"
-              value={discountRatio}
-              onChange={(event) => setDiscountRatio(event.target.value)}
-              style={{ padding: "0.75rem", color: "var(--text)", background: "var(--surface)", border: "1px solid var(--border)" }}
-            />
-          </label>
-          <label style={{ display: "grid", gap: "0.375rem", color: "var(--text-muted)" }}>
-            설명 수준
-            <select
-              value={explainLevel}
-              onChange={(event) => setExplainLevel(event.target.value)}
-              style={{ padding: "0.75rem", color: "var(--text)", background: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <option value="simple">simple</option>
-              <option value="detailed">detailed</option>
-            </select>
-          </label>
-          <label style={{ display: "grid", gap: "0.375rem", color: "var(--text-muted)" }}>
-            설명 분야
-            <select
-              value={explainDomain}
-              onChange={(event) => setExplainDomain(event.target.value)}
-              style={{ padding: "0.75rem", color: "var(--text)", background: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <option value="plain">plain</option>
-              <option value="finance">finance</option>
-            </select>
-          </label>
-          <button
-            type="submit"
-            disabled={saveState.status === "saving"}
-            style={{ padding: "0.75rem", background: "var(--primary)", color: "var(--primary-content)", borderRadius: "var(--radius-md)", fontWeight: 700 }}
-          >
-            {saveState.status === "saving" ? "저장 중…" : "설정 저장"}
-          </button>
-        </form>
-        {saveState.status === "saved" && <p role="status">서버에 저장했습니다.</p>}
-        {saveState.status === "error" && <p role="alert">{saveState.message}</p>}
-        <p style={{ color: "var(--text-muted)", marginTop: "1rem" }}>
-          서버 실효 스프레드: {settings.effectiveSpreadRatio}
-        </p>
-      </Card>
+      <SettingsForm
+        settings={settings}
+        saveState={saveState}
+        onSave={(input) => {
+          void saveSettings(input);
+        }}
+      />
 
       <Card title="최근 알림">
         {notifications.notifications.length === 0 ? (
@@ -180,5 +125,88 @@ export function MyPageApiScreen({
         )}
       </div>
     </section>
+  );
+}
+
+interface SettingsFormProps {
+  readonly settings: SettingsResponse;
+  readonly saveState: SettingsSaveState;
+  readonly onSave: (input: SettingsUpdateRequest) => void;
+}
+
+/**
+ * 서버 설정 폼.
+ *
+ * 조회가 끝난 뒤에만 마운트되므로 서버 값으로 state를 직접 초기화한다.
+ * useEffect로 사후 동기화하면 사용자의 입력이 뒤늦은 초기화에 덮일 수 있다.
+ */
+function SettingsForm({ settings, saveState, onSave }: SettingsFormProps) {
+  const [discountRatio, setDiscountRatio] = useState(
+    String(settings.fxDiscountRatio),
+  );
+  const [explainLevel, setExplainLevel] = useState(settings.explainLevel);
+  const [explainDomain, setExplainDomain] = useState(settings.explainDomain);
+
+  return (
+    <Card title="기본 설정">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSave({
+            fxDiscountRatio: Number(discountRatio),
+            explainLevel,
+            explainDomain,
+          });
+        }}
+        style={{ display: "grid", gap: "1rem" }}
+      >
+        <label style={{ display: "grid", gap: "0.375rem", color: "var(--text-muted)" }}>
+          환전 우대율 API 값 (0~1)
+          <input
+            type="number"
+            min="0"
+            max="1"
+            step="0.01"
+            value={discountRatio}
+            onChange={(event) => setDiscountRatio(event.target.value)}
+            style={{ padding: "0.75rem", color: "var(--text)", background: "var(--surface)", border: "1px solid var(--border)" }}
+          />
+        </label>
+        <label style={{ display: "grid", gap: "0.375rem", color: "var(--text-muted)" }}>
+          설명 수준
+          <select
+            value={explainLevel}
+            onChange={(event) => setExplainLevel(event.target.value)}
+            style={{ padding: "0.75rem", color: "var(--text)", background: "var(--surface)", border: "1px solid var(--border)" }}
+          >
+            <option value="simple">simple</option>
+            <option value="detailed">detailed</option>
+          </select>
+        </label>
+        <label style={{ display: "grid", gap: "0.375rem", color: "var(--text-muted)" }}>
+          설명 분야
+          <select
+            value={explainDomain}
+            onChange={(event) => setExplainDomain(event.target.value)}
+            style={{ padding: "0.75rem", color: "var(--text)", background: "var(--surface)", border: "1px solid var(--border)" }}
+          >
+            <option value="plain">plain</option>
+            <option value="finance">finance</option>
+          </select>
+        </label>
+        <button
+          type="submit"
+          disabled={saveState.status === "saving"}
+          style={{ padding: "0.75rem", background: "var(--primary)", color: "var(--primary-content)", borderRadius: "var(--radius-md)", fontWeight: 700 }}
+        >
+          {saveState.status === "saving" ? "저장 중…" : "설정 저장"}
+        </button>
+      </form>
+      {saveState.status === "saved" && <p role="status">서버에 저장했습니다.</p>}
+      {saveState.status === "error" && <p role="alert">{saveState.message}</p>}
+      <p style={{ color: "var(--text-muted)", marginTop: "1rem" }}>
+        서버 실효 스프레드: {settings.effectiveSpreadRatio}
+      </p>
+    </Card>
   );
 }

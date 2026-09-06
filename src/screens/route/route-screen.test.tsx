@@ -341,7 +341,7 @@ describe("RouteScreen", () => {
   });
 
   it("데이터가 없으면 empty 상태를 표시한다", async () => {
-    render(<RouteScreen isDemo={false} loadPlan={async () => null} />);
+    render(<RouteScreen loadPlan={async () => null} />);
 
     expect(
       await screen.findByText("표시할 목표 또는 계획 데이터가 없습니다."),
@@ -349,7 +349,7 @@ describe("RouteScreen", () => {
   });
 
   it("API 오류를 표시하고 다시 불러온다", async () => {
-    const data = await loadRoutePlan(true);
+    const data = await loadRoutePlan();
     const loader = vi
       .fn()
       .mockRejectedValueOnce(new ApiError("계획 조회 실패", 503))

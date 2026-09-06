@@ -281,6 +281,20 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("API 모드에서 플래너 탭은 Swagger 화면을 렌더링한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    render(<App />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /대시보드 체험하기/ }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "목 데이터 사용 중" }));
+    await screen.findByText("API 연결됨");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "환전 플래너" })[0]);
+
+    expect(await screen.findByText(/플래너를 불러오/)).toBeInTheDocument();
+  });
+
   it.each([
     [new ApiError("데모 인증 API 오류", 500, "SERVER"), "데모 인증 API 오류"],
     [

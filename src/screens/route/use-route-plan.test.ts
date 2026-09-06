@@ -26,7 +26,7 @@ function createDeferred<T>(): Deferred<T> {
 }
 
 async function getDemoRoutePlan(): Promise<RoutePlanData> {
-  const data = await loadRoutePlan(true);
+  const data = await loadRoutePlan();
   if (data === null) {
     throw new Error("데모 Route fixture가 필요합니다.");
   }
@@ -42,7 +42,7 @@ describe("useRoutePlan", () => {
 
   it("null 응답을 empty 상태로 반환한다", async () => {
     const loader: RoutePlanLoader = vi.fn().mockResolvedValue(null);
-    const { result } = renderHook(() => useRoutePlan(false, loader));
+    const { result } = renderHook(() => useRoutePlan(loader));
 
     await waitFor(() => expect(result.current.state.status).toBe("empty"));
   });
@@ -51,7 +51,7 @@ describe("useRoutePlan", () => {
     const loader: RoutePlanLoader = vi
       .fn()
       .mockRejectedValue(new Error("network"));
-    const { result } = renderHook(() => useRoutePlan(true, loader));
+    const { result } = renderHook(() => useRoutePlan(loader));
 
     await waitFor(() => expect(result.current.state.status).toBe("error"));
     expect(result.current.state).toEqual({
@@ -64,7 +64,7 @@ describe("useRoutePlan", () => {
     const loader: RoutePlanLoader = vi
       .fn()
       .mockResolvedValue(await getDemoRoutePlan());
-    const { result } = renderHook(() => useRoutePlan(true, loader));
+    const { result } = renderHook(() => useRoutePlan(loader));
 
     await waitFor(() => expect(result.current.state.status).toBe("success"));
     act(() => result.current.reload());
@@ -74,7 +74,7 @@ describe("useRoutePlan", () => {
   it("언마운트 뒤 완료된 응답은 상태에 반영하지 않는다", async () => {
     const deferred = createDeferred<RoutePlanData | null>();
     const loader: RoutePlanLoader = vi.fn(() => deferred.promise);
-    const { unmount } = renderHook(() => useRoutePlan(true, loader));
+    const { unmount } = renderHook(() => useRoutePlan(loader));
 
     unmount();
     await act(async () => deferred.resolve(await getDemoRoutePlan()));
@@ -85,7 +85,7 @@ describe("useRoutePlan", () => {
   it("언마운트 뒤 발생한 오류는 상태에 반영하지 않는다", async () => {
     const deferred = createDeferred<RoutePlanData | null>();
     const loader: RoutePlanLoader = vi.fn(() => deferred.promise);
-    const { unmount } = renderHook(() => useRoutePlan(true, loader));
+    const { unmount } = renderHook(() => useRoutePlan(loader));
 
     unmount();
     await act(async () => deferred.reject(new Error("late error")));

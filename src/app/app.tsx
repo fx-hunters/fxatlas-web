@@ -243,7 +243,7 @@ export function App() {
               <HomeScreen isDemo={isDemo} onNavigate={navigate} />
             )}
             {activeTab === "planner" && (
-              <RouteScreen isDemo={isDemo} onNavigate={navigate} />
+              <RouteScreen mode={isDemo ? "demo" : "api"} onNavigate={navigate} />
             )}
             {activeTab === "assets" && (
               <XRayScreen isDemo={isDemo} onNavigate={navigate} />

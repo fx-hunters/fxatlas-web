@@ -13,7 +13,7 @@ import { RouteScreenView } from "./route-screen-view";
 import { usePlannerInteraction } from "./use-planner-interaction";
 
 async function getDemoRoutePlan(): Promise<RoutePlanData> {
-  const data = await loadRoutePlan(true);
+  const data = await loadRoutePlan();
   if (data === null) {
     throw new Error("데모 플래너 fixture가 필요합니다.");
   }
