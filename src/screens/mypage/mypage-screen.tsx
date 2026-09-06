@@ -1,6 +1,8 @@
 import { useMyPage, NOTIFICATION_OPTIONS } from './use-mypage';
 import { Icon } from '../../components/common/icon';
 import type { NavTabId } from '../../types/navigation';
+import { MyPageApiScreen } from './mypage-api-screen';
+import type { MyPageApiDependencies } from './use-mypage-api';
 
 export interface MyPageScreenProps {
   readonly isDemo?: boolean;
@@ -9,9 +11,42 @@ export interface MyPageScreenProps {
   readonly onLogin?: () => void;
   readonly onLogout?: () => void;
   readonly onStartTour?: () => void;
+  readonly apiDependencies?: MyPageApiDependencies;
 }
 
 export function MyPageScreen({
+  isDemo = true,
+  isLoggedIn = true,
+  onNavigate,
+  onLogin,
+  onLogout,
+  onStartTour,
+  apiDependencies,
+}: MyPageScreenProps) {
+  if (!isDemo) {
+    return (
+      <MyPageApiScreen
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+        onStartTour={onStartTour}
+        dependencies={apiDependencies}
+      />
+    );
+  }
+
+  return (
+    <MyPageDemoScreen
+      isDemo={isDemo}
+      isLoggedIn={isLoggedIn}
+      onNavigate={onNavigate}
+      onLogin={onLogin}
+      onLogout={onLogout}
+      onStartTour={onStartTour}
+    />
+  );
+}
+
+function MyPageDemoScreen({
   isDemo = true,
   isLoggedIn = true,
   onNavigate,

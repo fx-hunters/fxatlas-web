@@ -1,10 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "./components/common/icon";
+import { ApiError } from "./api/client";
+import type { LoginRequest, SignupRequest } from "./api/auth";
+import type { SessionPersistence } from "./api/session";
+import type { AuthSuccessResult } from "./types/auth";
 
 export interface AuthPageProps {
   readonly initialMode?: "login" | "signup";
-  readonly onSuccess: () => void;
+  readonly onSuccess: (result: AuthSuccessResult | void) => void;
   readonly onBack: () => void;
+  readonly authenticateLogin?: (
+    input: LoginRequest,
+    persistence: SessionPersistence,
+  ) => Promise<AuthSuccessResult | void>;
+  readonly authenticateSignup?: (
+    input: SignupRequest,
+  ) => Promise<AuthSuccessResult | void>;
 }
 
 export type AuthMode = "login" | "signup";
@@ -20,11 +31,11 @@ export function pwStrength(pw: string) {
   if (/[^A-Za-z0-9]/.test(pw)) score++;
 
   const map = [
-    { label: "매우 약함", color: "#E3705E" },
-    { label: "약함", color: "#D9A03C" },
-    { label: "보통", color: "#D9A03C" },
-    { label: "강함", color: "#43B37C" },
-    { label: "매우 강함", color: "#00FFAA" },
+    { label: "매우 약함", color: "var(--danger)" },
+    { label: "약함", color: "var(--warn)" },
+    { label: "보통", color: "var(--warn)" },
+    { label: "강함", color: "var(--normal)" },
+    { label: "매우 강함", color: "var(--primary)" },
   ];
   const idx = Math.max(0, Math.min(score - 1, 4));
   return { score, label: map[idx]!.label, color: map[idx]!.color };
@@ -43,7 +54,7 @@ export const inputBtnStyle = (active?: boolean): React.CSSProperties => ({
   border: "none",
   cursor: "pointer",
   whiteSpace: "nowrap",
-  background: active ? "var(--primary)" : "rgba(0,255,170,0.1)",
+  background: active ? "var(--primary)" : "var(--primary-subtle)",
   color: active ? "var(--primary-content)" : "var(--primary)",
   transition: "all 0.15s",
 });
@@ -87,7 +98,7 @@ export function Field({
   const getBorderColor = () => {
     if (error) return "var(--danger)";
     if (successBorder) return "var(--primary)";
-    if (focused) return "rgba(0,255,170,0.5)";
+    if (focused) return "var(--primary-border)";
     return "var(--border)";
   };
 
@@ -111,7 +122,7 @@ export function Field({
           border: `1px solid ${getBorderColor()}`,
           borderRadius: "var(--radius-md)",
           padding: "0 0.875rem",
-          boxShadow: focused && !error ? "0 0 0 3px rgba(0,255,170,0.08)" : "none",
+          boxShadow: focused && !error ? "var(--shadow-sm)" : "none",
           transition: "border-color 0.15s, box-shadow 0.15s",
           opacity: disabled ? 0.75 : 1,
         }}
@@ -249,10 +260,20 @@ export function Checkbox({ checked, onChange, label, id, ariaLabel }: CheckboxPr
   );
 }
 
-export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageProps) {
+const resolveImmediately = async () => undefined;
+
+export function AuthPage({
+  initialMode = "login",
+  onSuccess,
+  onBack,
+  authenticateLogin = resolveImmediately,
+  authenticateSignup = resolveImmediately,
+}: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [animating, setAnimating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 로그인 상태 ---
   const [loginEmail, setLoginEmail] = useState("");
@@ -264,7 +285,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
   // --- 회원가입 상태 ---
   const [suName, setSuName] = useState("");
   const [suEmail, setSuEmail] = useState("");
-  const [emailChecked, setEmailChecked] = useState<null | boolean>(null);
+  const [emailChecked, setEmailChecked] = useState<null | true>(null);
   const [suPw, setSuPw] = useState("");
   const [showSuPw, setShowSuPw] = useState(false);
   const [suPwConfirm, setSuPwConfirm] = useState("");
@@ -363,12 +384,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
       return rest;
     });
 
-    // Mock 중복 체크
-    if (suEmail === "admin@divurve.com" || suEmail === "test@test.com") {
-      setEmailChecked(false);
-    } else {
-      setEmailChecked(true);
-    }
+    setEmailChecked(true);
   };
 
   const toggleAllTerms = (v: boolean) => {
@@ -378,7 +394,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
     setTermMarketing(v);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!loginEmail) errs.email = "이메일을 입력하세요.";
@@ -388,15 +404,30 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
       setErrors(errs);
       return;
     }
-    onSuccess();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const result = await authenticateLogin(
+        { email: loginEmail, password: loginPw },
+        autoLogin ? "local" : "session",
+      );
+      onSuccess(result);
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error.message
+          : "로그인 요청을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!suName) errs.name = "이름을 입력하세요.";
     if (!suEmail || !suEmail.includes("@")) errs.suEmail = "올바른 이메일을 입력하세요.";
-    if (emailChecked === false) errs.suEmail = "이미 사용 중인 이메일입니다.";
     if (!suPw || suPw.length < 8) errs.suPw = "비밀번호는 8자 이상이어야 합니다.";
     if (suPw !== suPwConfirm) errs.suPwConfirm = "비밀번호가 일치하지 않습니다.";
     if (!phoneVerified) errs.phone = "휴대폰 인증을 완료하세요.";
@@ -406,7 +437,28 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
       setErrors(errs);
       return;
     }
-    onSuccess();
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const result = await authenticateSignup({
+        email: suEmail,
+        password: suPw,
+        name: suName,
+      });
+      onSuccess(result);
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error.message
+          : "회원가입 요청을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSocialUnavailable = () => {
+    setSubmitError("소셜 로그인 API는 현재 Swagger 명세에 제공되지 않습니다.");
   };
 
   const pwStrengthInfo = pwStrength(suPw);
@@ -462,7 +514,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
             transform: "translate(-50%, -50%)",
             width: "300px",
             height: "300px",
-            background: "radial-gradient(circle, rgba(0,255,170,0.12) 0%, transparent 70%)",
+            background: "radial-gradient(circle, var(--primary-subtle) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -515,7 +567,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
               color: "var(--primary-content)",
               fontWeight: 900,
               fontSize: "1.75rem",
-              boxShadow: "0 0 32px rgba(0,255,170,0.45)",
+              boxShadow: "var(--shadow-lg)",
               marginBottom: "1rem",
             }}
           >
@@ -672,6 +724,22 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
               transition: "opacity 0.18s ease, transform 0.18s ease",
             }}
           >
+            {submitError && (
+              <p
+                role="alert"
+                style={{
+                  color: "var(--danger)",
+                  backgroundColor: "var(--danger-bg)",
+                  border: "1px solid var(--danger-border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "0.75rem",
+                  marginBottom: "1rem",
+                  fontSize: "0.8125rem",
+                }}
+              >
+                {submitError}
+              </p>
+            )}
             {mode === "login" ? (
               /* --- 로그인 폼 --- */
               <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
@@ -791,6 +859,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                 {/* 로그인 버튼 */}
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{
                     width: "100%",
                     padding: "0.8125rem",
@@ -801,12 +870,12 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                     fontWeight: 700,
                     border: "none",
                     cursor: "pointer",
-                    boxShadow: "0 0 20px rgba(0,255,170,0.3)",
+                    boxShadow: "var(--shadow-md)",
                     marginTop: "0.5rem",
                     transition: "all 0.15s ease",
                   }}
                 >
-                  로그인
+                  {isSubmitting ? "로그인 중…" : "로그인"}
                 </button>
 
                 {/* 구분선 */}
@@ -828,14 +897,14 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     type="button"
-                    onClick={onSuccess}
+                    onClick={handleSocialUnavailable}
                     aria-label="카카오 로그인"
                     style={{
                       flex: 1,
                       padding: "0.625rem 0",
                       borderRadius: "var(--radius-md)",
-                      backgroundColor: "#FEE500",
-                      color: "#3C1E1E",
+                      backgroundColor: "var(--surface-subtle)",
+                      color: "var(--text)",
                       border: "none",
                       fontSize: "0.8125rem",
                       fontWeight: 700,
@@ -847,14 +916,14 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                   </button>
                   <button
                     type="button"
-                    onClick={onSuccess}
+                    onClick={handleSocialUnavailable}
                     aria-label="네이버 로그인"
                     style={{
                       flex: 1,
                       padding: "0.625rem 0",
                       borderRadius: "var(--radius-md)",
-                      backgroundColor: "#03C75A",
-                      color: "#ffffff",
+                      backgroundColor: "var(--surface-subtle)",
+                      color: "var(--text)",
                       border: "none",
                       fontSize: "0.8125rem",
                       fontWeight: 700,
@@ -866,7 +935,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                   </button>
                   <button
                     type="button"
-                    onClick={onSuccess}
+                    onClick={handleSocialUnavailable}
                     aria-label="구글 로그인"
                     style={{
                       flex: 1,
@@ -946,11 +1015,8 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                   }}
                   placeholder="name@example.com"
                   autoComplete="email"
-                  error={
-                    errors.suEmail ||
-                    (emailChecked === false ? "이미 사용 중인 이메일입니다." : undefined)
-                  }
-                  successHint={emailChecked === true ? "사용 가능한 이메일입니다." : undefined}
+                  error={errors.suEmail}
+                  successHint={emailChecked === true ? "가입 시 서버에서 중복 여부를 확인합니다." : undefined}
                   successBorder={emailChecked === true}
                   suffix={
                     <button
@@ -958,7 +1024,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                       onClick={handleCheckEmailDuplicate}
                       style={inputBtnStyle(emailChecked === true)}
                     >
-                      {emailChecked === true ? "확인완료" : "중복확인"}
+                      {emailChecked === true ? "형식 확인됨" : "형식 확인"}
                     </button>
                   }
                 />
@@ -1160,6 +1226,16 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                   />
                 )}
 
+                <p
+                  style={{
+                    color: "var(--text-muted)",
+                    fontSize: "0.75rem",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  휴대폰 인증은 현재 Swagger 계약에 없어 UI 체험용으로만 동작합니다.
+                </p>
+
                 {/* 약관 동의 박스 */}
                 <div
                   style={{
@@ -1264,6 +1340,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                 {/* 가입하기 버튼 */}
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{
                     width: "100%",
                     padding: "0.8125rem",
@@ -1274,12 +1351,12 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                     fontWeight: 700,
                     border: "none",
                     cursor: "pointer",
-                    boxShadow: "0 0 20px rgba(0,255,170,0.3)",
+                    boxShadow: "var(--shadow-md)",
                     marginTop: "0.5rem",
                     transition: "all 0.15s ease",
                   }}
                 >
-                  가입하기
+                  {isSubmitting ? "가입 중…" : "가입하기"}
                 </button>
 
                 {/* 구분선 */}
@@ -1301,14 +1378,14 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     type="button"
-                    onClick={onSuccess}
+                    onClick={handleSocialUnavailable}
                     aria-label="카카오로 시작하기"
                     style={{
                       flex: 1,
                       padding: "0.625rem 0",
                       borderRadius: "var(--radius-md)",
-                      backgroundColor: "#FEE500",
-                      color: "#3C1E1E",
+                      backgroundColor: "var(--surface-subtle)",
+                      color: "var(--text)",
                       border: "none",
                       fontSize: "0.8125rem",
                       fontWeight: 700,
@@ -1320,14 +1397,14 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                   </button>
                   <button
                     type="button"
-                    onClick={onSuccess}
+                    onClick={handleSocialUnavailable}
                     aria-label="네이버로 시작하기"
                     style={{
                       flex: 1,
                       padding: "0.625rem 0",
                       borderRadius: "var(--radius-md)",
-                      backgroundColor: "#03C75A",
-                      color: "#ffffff",
+                      backgroundColor: "var(--surface-subtle)",
+                      color: "var(--text)",
                       border: "none",
                       fontSize: "0.8125rem",
                       fontWeight: 700,
@@ -1339,7 +1416,7 @@ export function AuthPage({ initialMode = "login", onSuccess, onBack }: AuthPageP
                   </button>
                   <button
                     type="button"
-                    onClick={onSuccess}
+                    onClick={handleSocialUnavailable}
                     aria-label="구글로 시작하기"
                     style={{
                       flex: 1,

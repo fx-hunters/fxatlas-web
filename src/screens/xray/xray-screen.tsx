@@ -2,13 +2,33 @@ import { useXRay } from "./use-xray";
 import { XRayExposureView } from "./xray-exposure-view";
 import { XRayFitnessView } from "./xray-fitness-view";
 import type { NavTabId } from "../../types/navigation";
+import { XrayApiScreen } from "./xray-api-screen";
+import type { XrayApiDependencies } from "./use-xray-api";
 
 interface XRayScreenProps {
   readonly isDemo?: boolean;
   readonly onNavigate?: (tab: NavTabId) => void;
+  readonly apiDependencies?: XrayApiDependencies;
 }
 
-export function XRayScreen({ isDemo = true, onNavigate }: XRayScreenProps) {
+export function XRayScreen({
+  isDemo = true,
+  onNavigate,
+  apiDependencies,
+}: XRayScreenProps) {
+  if (!isDemo) {
+    return (
+      <XrayApiScreen
+        onNavigate={onNavigate}
+        dependencies={apiDependencies}
+      />
+    );
+  }
+
+  return <XrayDemoScreen onNavigate={onNavigate} />;
+}
+
+function XrayDemoScreen({ onNavigate }: Pick<XRayScreenProps, "onNavigate">) {
   const {
     data,
     activeTab,
@@ -19,7 +39,7 @@ export function XRayScreen({ isDemo = true, onNavigate }: XRayScreenProps) {
     setSelectedScenarioId,
     setEurSimulationPct,
     openAssetModal,
-  } = useXRay(isDemo);
+  } = useXRay(true);
 
   const handleNavigateToPlanner = () => {
     if (onNavigate) {

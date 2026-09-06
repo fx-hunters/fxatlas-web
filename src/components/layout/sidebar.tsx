@@ -6,6 +6,7 @@ interface SidebarProps {
   readonly isDemo: boolean;
   readonly onSelectTab: (tab: NavTabId) => void;
   readonly onToggleDemo: () => void;
+  readonly isDemoSwitching?: boolean;
 }
 
 export function Sidebar({
@@ -13,6 +14,7 @@ export function Sidebar({
   isDemo,
   onSelectTab,
   onToggleDemo,
+  isDemoSwitching = false,
 }: SidebarProps) {
   return (
     <aside
@@ -126,6 +128,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onToggleDemo}
+          disabled={isDemoSwitching}
           style={{
             display: "flex",
             alignItems: "center",
@@ -141,7 +144,13 @@ export function Sidebar({
           }}
         >
           <Icon name={isDemo ? "checkCircle" : "database"} size={14} />
-          <span>{isDemo ? "데모 데이터 켜짐" : "빈 상태 보기"}</span>
+          <span>
+            {isDemoSwitching
+              ? "API 연결 중…"
+              : isDemo
+                ? "목 데이터 사용 중"
+                : "API 데이터 사용 중"}
+          </span>
         </button>
 
         <div
@@ -156,7 +165,7 @@ export function Sidebar({
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          기준일: 2026.09.01 종가
+          {isDemo ? "예시 데이터" : "Swagger API 연결"}
         </div>
       </div>
     </aside>

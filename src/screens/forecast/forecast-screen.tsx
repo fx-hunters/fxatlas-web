@@ -4,18 +4,33 @@ import { Badge } from "../../components/common/badge";
 import { Icon } from "../../components/common/icon";
 import type { NavTabId } from "../../types/navigation";
 import type { ForecastCurrency, ForecastPeriod } from "../../types/forecast";
+import { ForecastApiScreen } from "./forecast-api-screen";
+import type { ForecastApiLoader } from "./use-forecast-api";
 
 interface ForecastScreenProps {
   readonly isDemo?: boolean;
   readonly onNavigate?: (tab: NavTabId) => void;
+  readonly apiLoader?: ForecastApiLoader;
 }
 
 const CURRENCIES: readonly ForecastCurrency[] = ["USD", "JPY", "EUR"];
 const PERIODS: readonly ForecastPeriod[] = ["30D", "90D"];
 
-export function ForecastScreen({ isDemo = true, onNavigate }: ForecastScreenProps) {
+export function ForecastScreen({
+  isDemo = true,
+  onNavigate,
+  apiLoader,
+}: ForecastScreenProps) {
+  if (!isDemo) {
+    return <ForecastApiScreen onNavigate={onNavigate} loader={apiLoader} />;
+  }
+
+  return <ForecastDemoScreen onNavigate={onNavigate} />;
+}
+
+function ForecastDemoScreen({ onNavigate }: Pick<ForecastScreenProps, "onNavigate">) {
   const { currency, period, chartData, currencyInfo, setCurrency, setPeriod } =
-    useForecast(isDemo);
+    useForecast();
 
   const handleNavigateToPlanner = () => {
     if (onNavigate) {

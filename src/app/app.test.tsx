@@ -2,17 +2,73 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { fetchConnectivityChecks } from "../api/connectivity";
 import { App, shouldShowTour, TOUR_STORAGE_KEY } from "./app";
+import { login, startDemoSession } from "../api/auth";
+import { fetchHomeSummary } from "../api/home";
+import { ApiError } from "../api/client";
+import { readApiSession } from "../api/session";
+
+const STANDARD_AUTH_SESSION = {
+  accessToken: "access",
+  refreshToken: "refresh",
+  expiresIn: 1800,
+  isDemo: false,
+};
 
 vi.mock("../api/connectivity", () => ({
   fetchConnectivityChecks: vi.fn().mockResolvedValue([]),
   createConnectivityCheck: vi.fn(),
 }));
 
+vi.mock("../api/auth", () => ({
+  login: vi.fn().mockResolvedValue(undefined),
+  logout: vi.fn(),
+  signup: vi.fn().mockResolvedValue(undefined),
+  startDemoSession: vi.fn().mockResolvedValue({
+    accessToken: "demo",
+    refreshToken: "refresh",
+    expiresIn: 1800,
+    isDemo: true,
+  }),
+}));
+
+vi.mock("../api/session", () => ({ readApiSession: vi.fn().mockReturnValue(null) }));
+
+vi.mock("../api/home", () => ({
+  fetchHomeSummary: vi.fn().mockResolvedValue({
+    data: { notice: { message: "API 연결됨" } },
+    meta: { timestamp: "2026-09-06T00:00:00Z" },
+  }),
+}));
+
 beforeEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
   window.history.replaceState(null, "", "/");
   vi.mocked(fetchConnectivityChecks).mockResolvedValue([]);
+  vi.mocked(login).mockResolvedValue(STANDARD_AUTH_SESSION);
+  vi.mocked(readApiSession).mockReturnValue(null);
+  vi.mocked(startDemoSession).mockResolvedValue({
+    accessToken: "demo",
+    refreshToken: "refresh",
+    expiresIn: 1800,
+    isDemo: true,
+  });
+  vi.mocked(fetchHomeSummary).mockResolvedValue({
+    data: { notice: { message: "API 연결됨" } },
+    meta: { timestamp: "2026-09-06T00:00:00Z" },
+  });
 });
+
+function submitLogin() {
+  fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+  fireEvent.change(screen.getByLabelText("이메일"), {
+    target: { value: "user@example.com" },
+  });
+  fireEvent.change(screen.getByLabelText("비밀번호"), {
+    target: { value: "Password123!" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+}
 
 afterEach(() => {
   vi.mocked(fetchConnectivityChecks).mockClear();
@@ -171,17 +227,20 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "마이페이지", level: 2 })).toBeInTheDocument();
   });
 
-  it("데모 모드 토글 및 테마 토글이 정상 동작한다", () => {
+  it("목 데이터와 API 데이터 전환 및 테마 토글이 정상 동작한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     const startBtn = screen.getByRole("button", { name: /대시보드 체험하기/ });
     fireEvent.click(startBtn);
 
-    const demoToggle = screen.getByRole("button", { name: /데모 데이터 켜짐/ });
+    const demoToggle = screen.getByRole("button", { name: /목 데이터 사용 중/ });
     expect(demoToggle).toBeInTheDocument();
 
     fireEvent.click(demoToggle);
-    expect(screen.getByRole("button", { name: /빈 상태 보기/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /API 데이터 사용 중/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /API 데이터 사용 중/ }));
+    expect(screen.getByRole("button", { name: /목 데이터 사용 중/ })).toBeInTheDocument();
 
     const themeToggle = screen.getByRole("button", { name: /라이트 모드로 변경/ });
     fireEvent.click(themeToggle);
@@ -208,18 +267,35 @@ describe("App", () => {
     }
   });
 
-  it("사이드바에서 데모 데이터를 끄면 홈 빈 상태를 표시한다", () => {
+  it("사이드바에서 API 모드로 전환하면 서버 홈 요약을 표시한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
     fireEvent.click(
       screen.getByRole("button", { name: /대시보드 체험하기/ }),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "데모 데이터 켜짐" }));
+    fireEvent.click(screen.getByRole("button", { name: "목 데이터 사용 중" }));
 
     expect(
-      screen.getByRole("heading", { name: "외화 목표가 없습니다" }),
+      await screen.findByText("API 연결됨"),
     ).toBeInTheDocument();
+  });
+
+  it.each([
+    [new ApiError("데모 인증 API 오류", 500, "SERVER"), "데모 인증 API 오류"],
+    [
+      new Error("network"),
+      "API 데모 계정을 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    ],
+  ])("API 데이터 전환 오류를 화면에 표시한다", async (error, message) => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    vi.mocked(startDemoSession).mockRejectedValue(error);
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: /대시보드 체험하기/ }));
+    fireEvent.click(screen.getByRole("button", { name: "목 데이터 사용 중" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(screen.getByRole("button", { name: "목 데이터 사용 중" })).toBeEnabled();
   });
 
   it("/route 직접 진입 시 랜딩을 거치지 않고 플래너 첫 화면을 렌더링한다", async () => {
@@ -274,7 +350,109 @@ describe("App", () => {
     expect(screen.getByText("가장 지능적인 환전 타이밍")).toBeInTheDocument();
   });
 
-  it("랜딩 페이지에서 무료 시작 클릭 시 AuthPage 회원가입 탭으로 이동하고 인증 완료 시 대시보드로 이동한다", () => {
+  it("로그인 폼을 실제 인증 어댑터와 연결한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+    fireEvent.change(screen.getByLabelText("이메일"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("비밀번호"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+
+    await waitFor(() =>
+      expect(login).toHaveBeenCalledWith(
+        { email: "user@example.com", password: "Password123!" },
+        "session",
+      ),
+    );
+    expect(await screen.findByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
+  });
+
+  it("로그인 결과가 onboarded=false이면 초기 설정 경로로 이동한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    const initialSetupSession = {
+      ...STANDARD_AUTH_SESSION,
+      onboarded: false,
+    };
+    vi.mocked(login).mockResolvedValue(initialSetupSession);
+    render(<App />);
+
+    submitLogin();
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "어떤 분야의 설명이 가장 익숙한가요?",
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/initial-setup");
+    expect(screen.queryByRole("heading", { name: "DIVURVE" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "이 단계 건너뛰고 마치기" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "DIVURVE" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
+  });
+
+  it("인증된 사용자가 초기 설정 URL을 다시 열면 입력 화면을 복원한다", () => {
+    vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
+    window.history.replaceState(null, "", "/initial-setup");
+
+    render(<App />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: "어떤 분야의 설명이 가장 익숙한가요?",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("로그인 결과가 onboarded=true이면 홈으로 이동한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    const onboardedSession = {
+      ...STANDARD_AUTH_SESSION,
+      onboarded: true,
+    };
+    vi.mocked(login).mockResolvedValue(onboardedSession);
+    render(<App />);
+
+    submitLogin();
+
+    expect(
+      await screen.findByRole("heading", { name: "DIVURVE" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
+    expect(screen.queryByText("초기 설정")).not.toBeInTheDocument();
+  });
+
+  it("데모 사용자는 onboarded=false여도 초기 설정을 건너뛰고 홈으로 이동한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    const demoSession = {
+      ...STANDARD_AUTH_SESSION,
+      isDemo: true,
+      onboarded: false,
+    };
+    vi.mocked(login).mockResolvedValue(demoSession);
+    render(<App />);
+
+    submitLogin();
+
+    expect(
+      await screen.findByRole("heading", { name: "DIVURVE" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "목 데이터 사용 중" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
+  });
+
+  it("랜딩 페이지에서 무료 시작 클릭 시 API 회원가입 후 대시보드로 이동한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     render(<App />);
 
@@ -285,11 +463,18 @@ describe("App", () => {
     expect(screen.getByLabelText("이름")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "가입하기" })).toBeInTheDocument();
 
-    // 소셜 로그인 클릭으로 인증 완료 트리거
-    const googleBtn = screen.getByRole("button", { name: "구글로 시작하기" });
-    fireEvent.click(googleBtn);
+    fireEvent.change(screen.getByLabelText("이름"), { target: { value: "홍길동" } });
+    fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "user@example.com" } });
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "Password123!" } });
+    fireEvent.change(screen.getByLabelText("비밀번호 확인"), { target: { value: "Password123!" } });
+    fireEvent.change(screen.getByLabelText("휴대폰 번호"), { target: { value: "010-1234-5678" } });
+    fireEvent.click(screen.getByRole("button", { name: "인증번호 발송" }));
+    fireEvent.change(screen.getByLabelText("인증번호"), { target: { value: "1234" } });
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    fireEvent.click(screen.getByLabelText(/전체 동의/));
+    fireEvent.click(screen.getByRole("button", { name: "가입하기" }));
 
-    expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
   });
 
   it("마이페이지에서 로그아웃 버튼 클릭 시 랜딩 페이지로 복귀한다", () => {

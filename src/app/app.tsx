@@ -14,7 +14,16 @@ import { HomeScreen } from "../screens/home/home-screen";
 import { MyPageScreen } from "../screens/mypage/mypage-screen";
 import { RouteScreen } from "../screens/route/route-screen";
 import { XRayScreen } from "../screens/xray/xray-screen";
+import { InitialSetupScreen } from "../screens/initial-setup/initial-setup-screen";
 import { NAV_ITEMS } from "../types/navigation";
+import type { AuthSuccessResult } from "../types/auth";
+import { login, logout, signup, startDemoSession } from "../api/auth";
+import { ApiError } from "../api/client";
+import { readApiSession } from "../api/session";
+import {
+  INITIAL_SETUP_PATH,
+  resolvePostAuthDestination,
+} from "./post-auth-routing";
 
 export const TOUR_STORAGE_KEY = "divurve_tour_done";
 export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -41,7 +50,14 @@ export function App() {
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showTour, setShowTour] = useState<boolean>(false);
-  const [isDemo, setIsDemo] = useState<boolean>(true);
+  const [showInitialSetup, setShowInitialSetup] = useState<boolean>(
+    () =>
+      window.location.pathname === INITIAL_SETUP_PATH &&
+      readApiSession()?.isDemo === false,
+  );
+  const [isDemo, setIsDemo] = useState<boolean>(() => readApiSession() === null);
+  const [isApiSwitching, setIsApiSwitching] = useState(false);
+  const [apiSwitchError, setApiSwitchError] = useState<string | null>(null);
   const { isDark, toggleTheme, setTheme } = useTheme("dark");
 
   const currentTabItem = NAV_ITEMS.find((item) => item.id === activeTab);
@@ -61,12 +77,16 @@ export function App() {
 
   const handleBackToLanding = () => {
     navigate("home");
+    setShowInitialSetup(false);
     setShowAuth(false);
     setShowLanding(true);
   };
 
   const handleLogout = () => {
+    logout();
+    setIsDemo(true);
     navigate("home");
+    setShowInitialSetup(false);
     setShowLanding(true);
     setShowAuth(false);
   };
@@ -74,6 +94,7 @@ export function App() {
   const handleEnterDashboard = () => {
     setShowLanding(false);
     setShowAuth(false);
+    setShowInitialSetup(false);
     try {
       const stored = localStorage.getItem(TOUR_STORAGE_KEY);
       if (shouldShowTour(stored)) {
@@ -81,6 +102,52 @@ export function App() {
       }
     } catch {
       setShowTour(true);
+    }
+  };
+
+  const handleAuthenticated = (result: AuthSuccessResult | void) => {
+    const destination = resolvePostAuthDestination(result);
+    setIsDemo(result?.isDemo === true);
+
+    if (destination === "initialSetup") {
+      setShowLanding(false);
+      setShowAuth(false);
+      setShowTour(false);
+      setShowInitialSetup(true);
+      if (window.location.pathname !== INITIAL_SETUP_PATH) {
+        window.history.pushState(null, "", INITIAL_SETUP_PATH);
+      }
+      return;
+    }
+
+    navigate("home");
+    handleEnterDashboard();
+  };
+
+  const handleInitialSetupComplete = () => {
+    navigate("home");
+    handleEnterDashboard();
+  };
+
+  const handleToggleDataSource = async () => {
+    setApiSwitchError(null);
+    if (!isDemo) {
+      setIsDemo(true);
+      return;
+    }
+
+    setIsApiSwitching(true);
+    try {
+      await startDemoSession();
+      setIsDemo(false);
+    } catch (error) {
+      setApiSwitchError(
+        error instanceof ApiError
+          ? error.message
+          : "API 데모 계정을 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    } finally {
+      setIsApiSwitching(false);
     }
   };
 
@@ -117,10 +184,20 @@ export function App() {
     return (
       <AuthPage
         initialMode={authMode}
-        onSuccess={handleEnterDashboard}
+        onSuccess={handleAuthenticated}
         onBack={handleBackToLanding}
+        authenticateLogin={async (input, persistence) => {
+          return login(input, persistence);
+        }}
+        authenticateSignup={async (input) => {
+          return signup(input);
+        }}
       />
     );
+  }
+
+  if (showInitialSetup) {
+    return <InitialSetupScreen onComplete={handleInitialSetupComplete} />;
   }
 
   return (
@@ -129,7 +206,8 @@ export function App() {
         activeTab={activeTab}
         isDemo={isDemo}
         onSelectTab={navigate}
-        onToggleDemo={() => setIsDemo((previous) => !previous)}
+        onToggleDemo={() => void handleToggleDataSource()}
+        isDemoSwitching={isApiSwitching}
       />
 
       <div className="app-main-layout">
@@ -141,6 +219,22 @@ export function App() {
         />
 
         <main className="app-scroll-content">
+          {apiSwitchError && (
+            <div
+              role="alert"
+              style={{
+                margin: "1rem auto 0",
+                maxWidth: "1200px",
+                padding: "0.75rem 1rem",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--danger-border)",
+                backgroundColor: "var(--danger-bg)",
+                color: "var(--danger)",
+              }}
+            >
+              {apiSwitchError}
+            </div>
+          )}
           <div
             key={activeTab}
             className="app-content-container page-enter-animation"
@@ -160,6 +254,7 @@ export function App() {
             {activeTab === "mypage" && (
               <MyPageScreen
                 isDemo={isDemo}
+                isLoggedIn={true}
                 onNavigate={navigate}
                 onLogin={goToLogin}
                 onLogout={handleLogout}
@@ -170,7 +265,7 @@ export function App() {
           </div>
         </main>
 
-        <Footer />
+        <Footer isDemo={isDemo} />
       </div>
 
       <MobileNav activeTab={activeTab} onSelectTab={navigate} />
