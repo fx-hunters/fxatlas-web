@@ -153,10 +153,51 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   }
 }
 
+/**
+ * 만료된 액세스 토큰을 갱신하고 새 토큰을 돌려준다. 갱신할 수 없으면 null.
+ *
+ * `api/auth.ts`가 `client.ts`를 쓰므로 반대 방향으로 직접 부르면 순환이 생긴다.
+ * 그래서 갱신 수단을 밖에서 등록받는다(AGENTS.md §7.1).
+ */
+export type SessionRefresher = () => Promise<string | null>;
+
+let sessionRefresher: SessionRefresher | null = null;
+
+export function registerSessionRefresher(
+  refresher: SessionRefresher | null,
+): void {
+  sessionRefresher = refresher;
+}
+
+const AUTH_REQUIRED_ERROR = () =>
+  new ApiError(
+    "로그인이 필요한 요청입니다. 로그인 후 다시 시도해 주세요.",
+    401,
+    "AUTH_REQUIRED",
+  );
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (sessionRefresher === null) return null;
+  try {
+    return await sessionRefresher();
+  } catch {
+    return null;
+  }
+}
+
 export async function requestWithMeta<T>(
   path: string,
   init: ApiRequestInit = {},
   env?: ApiEnv,
+): Promise<ApiResult<T>> {
+  return sendRequest<T>(path, init, env, true);
+}
+
+async function sendRequest<T>(
+  path: string,
+  init: ApiRequestInit,
+  env: ApiEnv | undefined,
+  canRefresh: boolean,
 ): Promise<ApiResult<T>> {
   const {
     body,
@@ -169,13 +210,13 @@ export async function requestWithMeta<T>(
   if (body !== undefined) headers.set("Content-Type", "application/json");
 
   if (requiresAuth) {
-    const accessToken = getApiAccessToken();
+    let accessToken = getApiAccessToken();
+    if (!accessToken && canRefresh) {
+      // 토큰이 만료돼 사라졌으면 네트워크를 타기 전에 먼저 갱신해 본다.
+      accessToken = await refreshAccessToken();
+    }
     if (!accessToken) {
-      throw new ApiError(
-        "로그인이 필요한 요청입니다. 로그인 후 다시 시도해 주세요.",
-        401,
-        "AUTH_REQUIRED",
-      );
+      throw AUTH_REQUIRED_ERROR();
     }
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
@@ -193,6 +234,14 @@ export async function requestWithMeta<T>(
       0,
       "NETWORK_ERROR",
     );
+  }
+
+  if (response.status === 401 && requiresAuth && canRefresh) {
+    // 서버가 토큰을 거절했다. 한 번만 갱신해 다시 보내고, 그래도 안 되면 던진다.
+    const refreshed = await refreshAccessToken();
+    if (refreshed !== null) {
+      return sendRequest<T>(path, init, env, false);
+    }
   }
 
   const payload = await parseResponseBody(response);
