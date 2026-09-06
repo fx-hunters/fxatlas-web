@@ -5,6 +5,14 @@ import { App, shouldShowTour, TOUR_STORAGE_KEY } from "./app";
 import { login, startDemoSession } from "../api/auth";
 import { fetchHomeSummary } from "../api/home";
 import { ApiError } from "../api/client";
+import { readApiSession } from "../api/session";
+
+const STANDARD_AUTH_SESSION = {
+  accessToken: "access",
+  refreshToken: "refresh",
+  expiresIn: 1800,
+  isDemo: false,
+};
 
 vi.mock("../api/connectivity", () => ({
   fetchConnectivityChecks: vi.fn().mockResolvedValue([]),
@@ -37,6 +45,8 @@ beforeEach(() => {
   sessionStorage.clear();
   window.history.replaceState(null, "", "/");
   vi.mocked(fetchConnectivityChecks).mockResolvedValue([]);
+  vi.mocked(login).mockResolvedValue(STANDARD_AUTH_SESSION);
+  vi.mocked(readApiSession).mockReturnValue(null);
   vi.mocked(startDemoSession).mockResolvedValue({
     accessToken: "demo",
     refreshToken: "refresh",
@@ -48,6 +58,17 @@ beforeEach(() => {
     meta: { timestamp: "2026-09-06T00:00:00Z" },
   });
 });
+
+function submitLogin() {
+  fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+  fireEvent.change(screen.getByLabelText("이메일"), {
+    target: { value: "user@example.com" },
+  });
+  fireEvent.change(screen.getByLabelText("비밀번호"), {
+    target: { value: "Password123!" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+}
 
 afterEach(() => {
   vi.mocked(fetchConnectivityChecks).mockClear();
@@ -348,6 +369,87 @@ describe("App", () => {
       ),
     );
     expect(await screen.findByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
+  });
+
+  it("로그인 결과가 onboarded=false이면 초기 설정 경로로 이동한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    const initialSetupSession = {
+      ...STANDARD_AUTH_SESSION,
+      onboarded: false,
+    };
+    vi.mocked(login).mockResolvedValue(initialSetupSession);
+    render(<App />);
+
+    submitLogin();
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "어떤 분야의 설명이 가장 익숙한가요?",
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/initial-setup");
+    expect(screen.queryByRole("heading", { name: "DIVURVE" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "이 단계 건너뛰고 마치기" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "DIVURVE" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
+  });
+
+  it("인증된 사용자가 초기 설정 URL을 다시 열면 입력 화면을 복원한다", () => {
+    vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
+    window.history.replaceState(null, "", "/initial-setup");
+
+    render(<App />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: "어떤 분야의 설명이 가장 익숙한가요?",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("로그인 결과가 onboarded=true이면 홈으로 이동한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    const onboardedSession = {
+      ...STANDARD_AUTH_SESSION,
+      onboarded: true,
+    };
+    vi.mocked(login).mockResolvedValue(onboardedSession);
+    render(<App />);
+
+    submitLogin();
+
+    expect(
+      await screen.findByRole("heading", { name: "DIVURVE" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
+    expect(screen.queryByText("초기 설정")).not.toBeInTheDocument();
+  });
+
+  it("데모 사용자는 onboarded=false여도 초기 설정을 건너뛰고 홈으로 이동한다", async () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
+    const demoSession = {
+      ...STANDARD_AUTH_SESSION,
+      isDemo: true,
+      onboarded: false,
+    };
+    vi.mocked(login).mockResolvedValue(demoSession);
+    render(<App />);
+
+    submitLogin();
+
+    expect(
+      await screen.findByRole("heading", { name: "DIVURVE" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "목 데이터 사용 중" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
   });
 
   it("랜딩 페이지에서 무료 시작 클릭 시 API 회원가입 후 대시보드로 이동한다", async () => {

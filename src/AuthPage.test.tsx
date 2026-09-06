@@ -59,7 +59,8 @@ describe("AuthPage Component", () => {
   });
 
   it("로그인 폼에서 빈 값 제출 시 에러 메시지를 표시하고, 입력 시 API 인증을 요청한다", async () => {
-    const authenticateLogin = vi.fn().mockResolvedValue(undefined);
+    const authResult = { isDemo: false, onboarded: false };
+    const authenticateLogin = vi.fn().mockResolvedValue(authResult);
     render(<AuthPage onSuccess={onSuccessMock} onBack={onBackMock} authenticateLogin={authenticateLogin} />);
 
     const loginSubmitBtn = screen.getByRole("button", { name: "로그인" });
@@ -82,6 +83,7 @@ describe("AuthPage Component", () => {
     // 재제출 시 성공
     await act(async () => fireEvent.click(loginSubmitBtn));
     expect(onSuccessMock).toHaveBeenCalledTimes(1);
+    expect(onSuccessMock).toHaveBeenCalledWith(authResult);
     expect(authenticateLogin).toHaveBeenCalledWith(
       { email: "user@example.com", password: "password123!" },
       "session",
@@ -320,7 +322,8 @@ describe("AuthPage Component", () => {
   });
 
   it("회원가입 폼의 모든 필드가 올바를 때 API 회원가입 후 onSuccess를 호출한다", async () => {
-    const authenticateSignup = vi.fn().mockResolvedValue(undefined);
+    const authResult = { isDemo: false, onboarded: true };
+    const authenticateSignup = vi.fn().mockResolvedValue(authResult);
     render(<AuthPage initialMode="signup" onSuccess={onSuccessMock} onBack={onBackMock} authenticateSignup={authenticateSignup} />);
 
     // 이름
@@ -347,6 +350,7 @@ describe("AuthPage Component", () => {
     // 가입하기 제출
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "가입하기" })));
     expect(onSuccessMock).toHaveBeenCalledTimes(1);
+    expect(onSuccessMock).toHaveBeenCalledWith(authResult);
     expect(authenticateSignup).toHaveBeenCalledWith({
       email: "valid@divurve.com",
       password: "Password123!",

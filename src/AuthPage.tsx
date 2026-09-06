@@ -3,16 +3,19 @@ import { Icon } from "./components/common/icon";
 import { ApiError } from "./api/client";
 import type { LoginRequest, SignupRequest } from "./api/auth";
 import type { SessionPersistence } from "./api/session";
+import type { AuthSuccessResult } from "./types/auth";
 
 export interface AuthPageProps {
   readonly initialMode?: "login" | "signup";
-  readonly onSuccess: () => void;
+  readonly onSuccess: (result: AuthSuccessResult | void) => void;
   readonly onBack: () => void;
   readonly authenticateLogin?: (
     input: LoginRequest,
     persistence: SessionPersistence,
-  ) => Promise<void>;
-  readonly authenticateSignup?: (input: SignupRequest) => Promise<void>;
+  ) => Promise<AuthSuccessResult | void>;
+  readonly authenticateSignup?: (
+    input: SignupRequest,
+  ) => Promise<AuthSuccessResult | void>;
 }
 
 export type AuthMode = "login" | "signup";
@@ -404,11 +407,11 @@ export function AuthPage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await authenticateLogin(
+      const result = await authenticateLogin(
         { email: loginEmail, password: loginPw },
         autoLogin ? "local" : "session",
       );
-      onSuccess();
+      onSuccess(result);
     } catch (error) {
       setSubmitError(
         error instanceof ApiError
@@ -437,8 +440,12 @@ export function AuthPage({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await authenticateSignup({ email: suEmail, password: suPw, name: suName });
-      onSuccess();
+      const result = await authenticateSignup({
+        email: suEmail,
+        password: suPw,
+        name: suName,
+      });
+      onSuccess(result);
     } catch (error) {
       setSubmitError(
         error instanceof ApiError

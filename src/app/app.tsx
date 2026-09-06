@@ -14,10 +14,16 @@ import { HomeScreen } from "../screens/home/home-screen";
 import { MyPageScreen } from "../screens/mypage/mypage-screen";
 import { RouteScreen } from "../screens/route/route-screen";
 import { XRayScreen } from "../screens/xray/xray-screen";
+import { InitialSetupScreen } from "../screens/initial-setup/initial-setup-screen";
 import { NAV_ITEMS } from "../types/navigation";
+import type { AuthSuccessResult } from "../types/auth";
 import { login, logout, signup, startDemoSession } from "../api/auth";
 import { ApiError } from "../api/client";
 import { readApiSession } from "../api/session";
+import {
+  INITIAL_SETUP_PATH,
+  resolvePostAuthDestination,
+} from "./post-auth-routing";
 
 export const TOUR_STORAGE_KEY = "divurve_tour_done";
 export const TOUR_INACTIVITY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -44,6 +50,11 @@ export function App() {
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showTour, setShowTour] = useState<boolean>(false);
+  const [showInitialSetup, setShowInitialSetup] = useState<boolean>(
+    () =>
+      window.location.pathname === INITIAL_SETUP_PATH &&
+      readApiSession()?.isDemo === false,
+  );
   const [isDemo, setIsDemo] = useState<boolean>(() => readApiSession() === null);
   const [isApiSwitching, setIsApiSwitching] = useState(false);
   const [apiSwitchError, setApiSwitchError] = useState<string | null>(null);
@@ -66,6 +77,7 @@ export function App() {
 
   const handleBackToLanding = () => {
     navigate("home");
+    setShowInitialSetup(false);
     setShowAuth(false);
     setShowLanding(true);
   };
@@ -74,6 +86,7 @@ export function App() {
     logout();
     setIsDemo(true);
     navigate("home");
+    setShowInitialSetup(false);
     setShowLanding(true);
     setShowAuth(false);
   };
@@ -81,6 +94,7 @@ export function App() {
   const handleEnterDashboard = () => {
     setShowLanding(false);
     setShowAuth(false);
+    setShowInitialSetup(false);
     try {
       const stored = localStorage.getItem(TOUR_STORAGE_KEY);
       if (shouldShowTour(stored)) {
@@ -91,8 +105,27 @@ export function App() {
     }
   };
 
-  const handleAuthenticated = () => {
-    setIsDemo(false);
+  const handleAuthenticated = (result: AuthSuccessResult | void) => {
+    const destination = resolvePostAuthDestination(result);
+    setIsDemo(result?.isDemo === true);
+
+    if (destination === "initialSetup") {
+      setShowLanding(false);
+      setShowAuth(false);
+      setShowTour(false);
+      setShowInitialSetup(true);
+      if (window.location.pathname !== INITIAL_SETUP_PATH) {
+        window.history.pushState(null, "", INITIAL_SETUP_PATH);
+      }
+      return;
+    }
+
+    navigate("home");
+    handleEnterDashboard();
+  };
+
+  const handleInitialSetupComplete = () => {
+    navigate("home");
     handleEnterDashboard();
   };
 
@@ -154,13 +187,17 @@ export function App() {
         onSuccess={handleAuthenticated}
         onBack={handleBackToLanding}
         authenticateLogin={async (input, persistence) => {
-          await login(input, persistence);
+          return login(input, persistence);
         }}
         authenticateSignup={async (input) => {
-          await signup(input);
+          return signup(input);
         }}
       />
     );
+  }
+
+  if (showInitialSetup) {
+    return <InitialSetupScreen onComplete={handleInitialSetupComplete} />;
   }
 
   return (
