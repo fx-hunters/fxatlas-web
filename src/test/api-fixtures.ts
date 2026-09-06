@@ -1,6 +1,8 @@
+import type { ApiResult } from "../api/client";
 import type {
   FitPreviewResponse,
   ForecastBundle,
+  HomeSummaryResponse,
   MyPageBundle,
   SettingsResponse,
   StressRunResponse,
@@ -328,4 +330,111 @@ export const PLANNER_API_FIXTURE: PlannerApiOverview = {
       activePlan: null,
     },
   ],
+};
+
+export const HOME_SUMMARY_FIXTURE: ApiResult<HomeSummaryResponse> = {
+  data: {
+    blocks: [
+      { order: 1, key: "today", state: "filled" },
+      { order: 2, key: "profile_fit", state: "filled" },
+      { order: 3, key: "fx_status", state: "filled" },
+      { order: 4, key: "goals_route", state: "filled" },
+      { order: 5, key: "attention", state: "filled" },
+      { order: 6, key: "forecast", state: "filled" },
+    ],
+    today: { headlineCode: "vol_elevated_usd", badge: "caution" },
+    profileFit: { grade: "balanced", concentrationStatus: "above_threshold" },
+    fxStatus: {
+      fxRatio: 0.361,
+      topCurrencyCode: "USD",
+      dayChangeKrw: 84_000,
+      sensitivity1pctKrw: 247_200,
+    },
+    goalsRoute: {
+      activeGoals: [
+        {
+          id: "goal-1",
+          name: "도쿄 여행",
+          currencyCode: "JPY",
+          targetAmount: 300_000,
+          targetDate: "2026-12-20",
+          status: "active",
+        },
+      ],
+      routeEnabled: true,
+    },
+    attention: {
+      regimeBadge: "caution",
+      upcomingEvents: [
+        {
+          date: "2026-09-09",
+          title: "Federal Funds Rate Decision",
+          currencyCode: "USD",
+          importance: "High",
+        },
+        {
+          date: "2026-09-18",
+          title: "Retail Sales",
+          currencyCode: "USD",
+          importance: "Medium",
+        },
+      ],
+    },
+    forecast: {
+      pairCode: "USDKRW",
+      currentRate: 1_382.4,
+      interval80: { lo: 1_330.6, hi: 1_389.02 },
+    },
+  },
+  meta: { asOf: "2026-09-06T22:32:09.924Z" },
+};
+
+/** 위험성향 미측정 + 자산·목표 없음. 서버는 값 없는 필드를 키째 생략한다. */
+export const SPARSE_HOME_SUMMARY_FIXTURE: ApiResult<HomeSummaryResponse> = {
+  data: {
+    blocks: [
+      { order: 1, key: "today", state: "filled" },
+      { order: 2, key: "profile_fit", state: "not_measured" },
+      { order: 3, key: "fx_status", state: "filled" },
+      { order: 4, key: "goals_route", state: "route_pending" },
+      { order: 5, key: "attention", state: "filled" },
+      { order: 6, key: "forecast", state: "filled" },
+    ],
+    today: { headlineCode: "vol_normal_usd", badge: "normal" },
+    profileFit: { concentrationStatus: "unknown" },
+    fxStatus: {
+      fxRatio: 1.0,
+      topCurrencyCode: "USD",
+      sensitivity1pctKrw: 93_806,
+    },
+    goalsRoute: { activeGoals: [], routeEnabled: false },
+    attention: { regimeBadge: "normal", upcomingEvents: [] },
+    forecast: {
+      pairCode: "USDKRW",
+      currentRate: 1_359.5,
+      interval80: { lo: 1_330.6, hi: 1_389.02 },
+    },
+  },
+  meta: { asOf: "2026-09-06T22:32:09.924Z" },
+};
+
+/** 모든 블록이 비어 있는 계정. 홈은 빈 화면으로 떨어진다. */
+export const EMPTY_HOME_SUMMARY_FIXTURE: ApiResult<HomeSummaryResponse> = {
+  data: {
+    blocks: [
+      { order: 1, key: "today", state: "empty" },
+      { order: 2, key: "profile_fit", state: "empty" },
+      { order: 3, key: "fx_status", state: "empty" },
+      { order: 4, key: "goals_route", state: "empty" },
+      { order: 5, key: "attention", state: "empty" },
+      { order: 6, key: "forecast", state: "empty" },
+    ],
+    today: {},
+    profileFit: {},
+    fxStatus: {},
+    goalsRoute: { activeGoals: [], routeEnabled: false },
+    attention: { upcomingEvents: [] },
+    forecast: {},
+  },
+  meta: { asOf: "2026-09-06T22:32:09.924Z" },
 };

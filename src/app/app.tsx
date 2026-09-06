@@ -233,7 +233,7 @@ export function App({ ensureSession }: AppProps = {}) {
             className="app-content-container page-enter-animation"
           >
             {activeTab === "home" && (
-              <HomeScreen isDemo={isDemoAccount} onNavigate={navigate} />
+              <HomeScreen onNavigate={navigate} />
             )}
             {activeTab === "planner" && (
               <RouteScreen mode={isDemoAccount ? "demo" : "api"} onNavigate={navigate} />

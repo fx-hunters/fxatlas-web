@@ -5,7 +5,10 @@ import { App, shouldShowTour, TOUR_STORAGE_KEY } from "./app";
 import { login, startDemoSession } from "../api/auth";
 import { fetchHomeSummary } from "../api/home";
 import { fetchMyPageBundle } from "../api/mypage";
-import { MY_PAGE_API_FIXTURE } from "../test/api-fixtures";
+import {
+  HOME_SUMMARY_FIXTURE,
+  MY_PAGE_API_FIXTURE,
+} from "../test/api-fixtures";
 import { ApiError } from "../api/client";
 import { readApiSession } from "../api/session";
 
@@ -42,12 +45,7 @@ vi.mock("../api/mypage", () => ({
   updateSettings: vi.fn(),
 }));
 
-vi.mock("../api/home", () => ({
-  fetchHomeSummary: vi.fn().mockResolvedValue({
-    data: { notice: { message: "API 연결됨" } },
-    meta: { asOf: "2026-09-06T00:00:00Z" },
-  }),
-}));
+vi.mock("../api/home", () => ({ fetchHomeSummary: vi.fn() }));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -65,10 +63,7 @@ beforeEach(() => {
     onboarded: true,
   });
   vi.mocked(fetchMyPageBundle).mockResolvedValue(MY_PAGE_API_FIXTURE);
-  vi.mocked(fetchHomeSummary).mockResolvedValue({
-    data: { notice: { message: "API 연결됨" } },
-    meta: { asOf: "2026-09-06T00:00:00Z" },
-  });
+  vi.mocked(fetchHomeSummary).mockResolvedValue(HOME_SUMMARY_FIXTURE);
 });
 
 function submitLogin() {
@@ -137,7 +132,9 @@ describe("App", () => {
 
     expect(Number(localStorage.getItem(TOUR_STORAGE_KEY))).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "DIVURVE" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "오늘의 행동 (이번 주 확보액)" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "오늘의 핵심" }),
+    ).toBeInTheDocument();
   });
 
   it("localStorage에 최근 투어 완료 기록이 있으면 투어를 띄우지 않고 즉시 대시보드로 진입한다", async () => {
@@ -293,7 +290,7 @@ describe("App", () => {
     }
   });
 
-  it("회원 계정에서는 서버 홈 요약을 표시한다", async () => {
+  it("홈 탭은 계정 종류와 무관하게 서버 요약을 표시한다", async () => {
     localStorage.setItem(TOUR_STORAGE_KEY, Date.now().toString());
     vi.mocked(readApiSession).mockReturnValue(STANDARD_AUTH_SESSION);
     render(<App />);
@@ -302,7 +299,9 @@ describe("App", () => {
     );
     await screen.findByRole("heading", { name: "DIVURVE" });
 
-    expect(await screen.findByText("API 연결됨")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "오늘의 핵심" }),
+    ).toBeInTheDocument();
   });
 
   it("회원 계정의 플래너 탭은 Swagger 화면을 렌더링한다", async () => {
@@ -313,7 +312,7 @@ describe("App", () => {
       screen.getByRole("button", { name: /대시보드 체험하기/ }),
     );
     await screen.findByRole("heading", { name: "DIVURVE" });
-    await screen.findByText("API 연결됨");
+    await screen.findByRole("heading", { name: "오늘의 핵심" });
 
     fireEvent.click(screen.getAllByRole("button", { name: "환전 플래너" })[0]);
 

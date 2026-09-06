@@ -27,13 +27,76 @@ export interface RefreshRequest {
   readonly refreshToken: string;
 }
 
+export type HomeBlockKey =
+  | "today"
+  | "profile_fit"
+  | "fx_status"
+  | "goals_route"
+  | "attention"
+  | "forecast";
+
+/** 데이터가 없는 블록도 생략되지 않고 이 상태로만 구분된다. */
+export type HomeBlockState =
+  | "filled"
+  | "empty"
+  | "route_pending"
+  | "not_measured";
+
+export interface HomeBlock {
+  readonly order: number;
+  readonly key: HomeBlockKey;
+  readonly state: HomeBlockState;
+}
+
+export interface HomeActiveGoal {
+  readonly id: string;
+  readonly name: string;
+  readonly currencyCode: string;
+  readonly targetAmount: number;
+  readonly targetDate: string;
+  readonly status: string;
+}
+
+export interface HomeUpcomingEvent {
+  readonly date: string;
+  readonly title: string;
+  readonly currencyCode: string;
+  readonly importance: string;
+}
+
+/** 서버는 값이 없는 필드를 키째 생략하므로 하위 필드는 대부분 optional이다. */
 export interface HomeSummaryResponse {
-  readonly todayAction?: { readonly heroAmount?: string };
-  readonly currencyStatus?: { readonly totalAssets?: number };
-  readonly notice?: { readonly message?: string };
-  readonly weeklyChange?: { readonly summary?: string };
-  readonly marketSummary?: { readonly summary?: string };
-  readonly referenceTime?: string;
+  readonly blocks: readonly HomeBlock[];
+  readonly today: {
+    readonly headlineCode?: string;
+    readonly badge?: string;
+  };
+  readonly profileFit: {
+    readonly grade?: string;
+    readonly concentrationStatus?: string;
+  };
+  readonly fxStatus: {
+    readonly fxRatio?: number;
+    readonly topCurrencyCode?: string;
+    readonly dayChangeKrw?: number;
+    readonly sensitivity1pctKrw?: number;
+  };
+  readonly goalsRoute: {
+    readonly activeGoals: readonly HomeActiveGoal[];
+    readonly routeEnabled: boolean;
+  };
+  readonly attention: {
+    readonly regimeBadge?: string;
+    readonly upcomingEvents: readonly HomeUpcomingEvent[];
+  };
+  readonly forecast: {
+    readonly pairCode?: string;
+    readonly currentRate?: number;
+    readonly interval80?: {
+      readonly lo?: number;
+      readonly hi?: number;
+    };
+  };
 }
 
 export interface ForecastHistory {
