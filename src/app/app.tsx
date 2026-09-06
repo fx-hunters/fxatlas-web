@@ -242,7 +242,7 @@ export function App({ ensureSession }: AppProps = {}) {
               <XRayScreen isDemo={isDemoAccount} onNavigate={navigate} />
             )}
             {activeTab === "range" && (
-              <ForecastScreen isDemo={isDemoAccount} onNavigate={navigate} />
+              <ForecastScreen onNavigate={navigate} />
             )}
             {activeTab === "mypage" && (
               <MyPageScreen

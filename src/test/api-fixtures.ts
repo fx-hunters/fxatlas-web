@@ -8,15 +8,16 @@ import type { PlannerApiOverview } from "../api/planner";
 
 export const FORECAST_API_FIXTURE: ForecastBundle = {
   forecast: {
-    pairCode: "USD_KRW",
+    pairCode: "USDKRW",
     horizonDays: 30,
+    baseDate: "2026-09-04",
     currentRate: 1_400,
     baseRate: 1_395,
     history: [
       { d: "2026-09-01", rate: 1_390 },
       { d: "2026-09-02", rate: 1_400 },
     ],
-    path: [
+    band: [
       {
         d: "2026-09-02",
         p50Lo: 1_380,
@@ -36,13 +37,20 @@ export const FORECAST_API_FIXTURE: ForecastBundle = {
       { d: "2026-09-02", rate: 1_401 },
       { d: "2026-09-30", rate: 1_410 },
     ],
-    interval80: { lo: 1_350, hi: 1_450, widthPct: 7.1, vs3yAvg: 0.2 },
-    volatility: { realized30d: 0.08, percentile5y: 63, regime: "normal" },
-    userImpact: { per1pctKrw: 12_000, assetKrw: 1_200_000 },
+    interval80: { lo: 1_350, hi: 1_450, widthPct: 0.071 },
+    volatility: { regime: "normal", vol30d: 0.08, volPercentile5y: 0.63 },
+    userImpact: { assetKrw: 1_200_000, per1pctKrw: 12_000 },
+    labels: { band: "예측 범위 / 불확실성 구간", modelPath: "모델의 참고 중심 경로" },
+    modelInfo: {
+      intervalLevels: [0.5, 0.8],
+      assumptions: "드리프트 0 기준선에 30일 변동성을 적용한 구간입니다.",
+      limitations: "실제 환율은 구간을 벗어날 수 있습니다.",
+    },
+    uncertaintyNote: "USDKRW 변동성은 5년 분포의 평시 범위입니다.",
     disclaimer: "서버 제공 범위이며 결과를 보장하지 않습니다.",
   },
   factors: {
-    pairCode: "USD_KRW",
+    pairCode: "USDKRW",
     factors: [
       { key: "rate", label: "금리 차", contributionPp: 0.4, direction: "bullish" },
       { key: "risk", label: "위험 선호", contributionPp: -0.2, direction: "BEARISH" },
@@ -50,12 +58,14 @@ export const FORECAST_API_FIXTURE: ForecastBundle = {
     ],
   },
   performance: {
-    pairCode: "USD_KRW",
+    pairCode: "USDKRW",
     horizonDays: 30,
-    model: { hitRate: 0.61, mae: 12, coverage80: 0.82, avgWidth: 80 },
-    randomWalk: { hitRate: 0.5, mae: 14 },
+    model: { hitRate: 0.61, mae: 0.031, coverage80: 0.82, avgWidth: 0.073 },
+    randomWalk: { hitRate: 0.5, mae: 0.035 },
+    rwImprovement: 0.14,
     validation: { method: "walk-forward", folds: 5, leakageGuard: true },
     note: "과거 검증 결과입니다.",
+    evaluatedAt: "2026-09-04T00:00:00Z",
   },
   events: {
     events: [
@@ -63,16 +73,17 @@ export const FORECAST_API_FIXTURE: ForecastBundle = {
         date: "2026-09-12",
         title: "미국 물가 발표",
         currencyCode: "USD",
-        importance: "high",
+        importance: "High",
       },
       {
         date: "2026-09-15",
         title: "일본 정책 회의",
         currencyCode: "JPY",
-        importance: "medium",
+        importance: "Medium",
       },
     ],
   },
+  asOf: "2026-09-06T22:14:01.070Z",
 };
 
 export const EMPTY_FORECAST_API_FIXTURE: ForecastBundle = {
@@ -80,9 +91,11 @@ export const EMPTY_FORECAST_API_FIXTURE: ForecastBundle = {
   forecast: {
     ...FORECAST_API_FIXTURE.forecast,
     history: [],
-    path: [],
+    band: [],
     modelPath: [],
   },
+  factors: { pairCode: "USDKRW", factors: [] },
+  events: { events: [] },
 };
 
 export const XRAY_API_FIXTURE: XrayBundle = {

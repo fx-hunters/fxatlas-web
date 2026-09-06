@@ -41,7 +41,7 @@ export interface ForecastHistory {
   readonly rate: number;
 }
 
-export interface ForecastPathPoint {
+export interface ForecastBandPoint {
   readonly d: string;
   readonly p50Lo: number;
   readonly p50Hi: number;
@@ -57,26 +57,36 @@ export interface ForecastModelPoint {
 export interface ForecastResponse {
   readonly pairCode: string;
   readonly horizonDays: number;
+  readonly baseDate: string;
   readonly currentRate: number;
   readonly baseRate: number;
   readonly history: readonly ForecastHistory[];
-  readonly path: readonly ForecastPathPoint[];
+  readonly band: readonly ForecastBandPoint[];
   readonly modelPath: readonly ForecastModelPoint[];
   readonly interval80: {
     readonly lo: number;
     readonly hi: number;
     readonly widthPct: number;
-    readonly vs3yAvg: number;
   };
   readonly volatility: {
-    readonly realized30d: number;
-    readonly percentile5y: number;
     readonly regime: string;
+    readonly vol30d: number;
+    readonly volPercentile5y: number;
   };
   readonly userImpact: {
-    readonly per1pctKrw: number;
     readonly assetKrw: number;
+    readonly per1pctKrw: number;
   };
+  readonly labels: {
+    readonly band: string;
+    readonly modelPath: string;
+  };
+  readonly modelInfo: {
+    readonly intervalLevels: readonly number[];
+    readonly assumptions: string;
+    readonly limitations: string;
+  };
+  readonly uncertaintyNote: string;
   readonly disclaimer: string;
 }
 
@@ -105,12 +115,14 @@ export interface ModelPerformanceResponse {
     readonly hitRate: number;
     readonly mae: number;
   };
+  readonly rwImprovement: number;
   readonly validation: {
     readonly method: string;
     readonly folds: number;
     readonly leakageGuard: boolean;
   };
   readonly note: string;
+  readonly evaluatedAt: string;
 }
 
 export interface ForecastEvent {
@@ -129,6 +141,8 @@ export interface ForecastBundle {
   readonly factors: FactorsResponse;
   readonly performance: ModelPerformanceResponse;
   readonly events: EventsResponse;
+  /** 서버가 응답 meta로 알려준 기준 시각(ISO 8601). */
+  readonly asOf: string;
 }
 
 export interface XrayExposure {
